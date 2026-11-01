@@ -12,11 +12,14 @@ Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 
 ## Blocked
 
+- kernel: incremental bus read. Expose detached EventRecords since a cursor, including phase, position and sequence; `since(cursor)` returns only KernelEvents.
 - 2848 BoundaryInput schema: DESIGN has no detailed schema; implementation requires `label` (researched/estimate/fiction) and `source`, preserving further canonical JSON fields. Confirm the complete boundary contract before building loaders.
 - Keeper decides whether RULES #3 allows Node `fs` in `writer.ts` and `reader.ts` (both also use `node:path`), and whether the manifest's nested `hashes: {file: hash}` shape is the §1 contract.
 - Timing mismatch: A1 currently requires t0 stock rows to check day 1; observer-only records omit t0. Resolve the initial-state contract before relying on A1 for harness acceptance.
 
 ## Gotchas
+
+Observer reads: full copy per checkpoint via `bus.state()` because `since(cursor)` omits required ordering metadata (phase, position, sequence); no incremental EventRecord API exists.
 
 - `share` takes `quantity: [part, whole]` (`src/aggregate.ts`).
 - `count` returns null when a member has no row; present rows with null values are excluded from the count (`src/aggregate.ts`).
