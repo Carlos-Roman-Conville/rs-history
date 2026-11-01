@@ -349,7 +349,8 @@ not History: History only records what it does.
   dispatch, not Rex's):** (a) **employer side:** until Society's organisation actors exist (DUP-58), a business is
   not a mind, so **a vacant post is acceptance**: a provisional host rule (evidence level 4), replaced by the
   organisation's own decision when Society lands, never a staffing formula inside Settlement. (b) **which post:**
-  the intention's `terms` gain a `role` field (Cognition contract amendment, registry records it); the host takes
+  the `work` intention gains an optional `role?: string` (the Settlement role id), a sibling of `terms` on the
+  `cognition.intention` payload (cognition units 5007, 5008; host repertoire data, Cognition never reads it); the host takes
   the first vacant post of that role by stable id, deterministic under replay. **Interim, until that field exists:**
   the host hires only where the run's fixture names the post per person. Not accepted (hours 0, no role, no vacant
   post) resolves `failed` with the reason among the stimuli (C-Q25). No wage comparison until Rex's wage rule
