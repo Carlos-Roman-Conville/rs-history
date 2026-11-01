@@ -7,6 +7,7 @@ export * from './classes.ts'
 export * from './aggregate.ts'
 export * from './dataset.ts'
 export * from './scores.ts'
+export * from './ensemble.ts'
 
 /** The engine prefix every History id carries. */
 export const ENGINE = 'history'
