@@ -287,7 +287,7 @@ sides; History writes the harness unit and the Gate. Units are queued when their
 | S3 | inventory → body (DUP-21, IF-36) | 30 days, a household | food leaving inventory = food entering nutrition; hunger falls after eating | N4 | Sonnet |
 | S4 | body → mind (Life → Cognition) | 7 days, the hungry pair on real Life signals | Cognition's inputs equal Life's written values; no stub on the path | N5 | Sonnet |
 | S5 | mind → demand (IF-26) | 30 days | every consumption event has an intention ancestor (A4 on this seam) | N6 | Sonnet |
-| S6 | labour (CONTRACTS §18) | 30 days | `hours()` per §18; posts filled from person-hours; the combined test DUP-26/28/29 asks for | N7 | Sonnet |
+| S6 | labour (CONTRACTS §18) and the host's `work` resolution (§3.8) | 30 days | `hours()` per §18; posts filled from person-hours; the combined test DUP-26/28/29 asks for; §3.8 checks H1–H4 | N7, `shared.host.work_resolution` built (Kernel keeper, after kernel v0.1.0) | Sonnet |
 | S7 | combined X1 | 2 years × 10 seeds × 2 arms | A1–A4 and the History gates (§3.5); A5 is the registry's re-audit | S0–S6 passed, N8, N11, N13, `2819-realism-life-step-convergence` | Sonnet; Haiku recompute of A2 from the record files |
 
 X1 is a scientific validation run under §11b: the combined run reruns when a seam changes, never per change.
@@ -328,6 +328,26 @@ unit takes its expected wall time. The 600 s alertness anomaly is LIFE-13.
 **Link safety (KRN-26, I-1048).** `history/harness/x1/node_modules` holds `file:` junctions to the live kernel and
 engines: never delete it recursively; never run X1 in a git worktree whose `node_modules` links to the live packages
 (each worktree runs its own `npm ci --offline`, or links are removed with `cmd /c rmdir` first).
+
+### 3.8 The host's `work` resolution in the X1 harness (contract `shared.host.work_resolution`, rs-platform 8c04e38; closes IF-27)
+
+Specified here at the controller's assignment (registry keeper, 2026-11-01); built by the Kernel keeper in
+`kernel/harness/` after kernel v0.1.0; carried by seam S6 and by S7. It is harness code, not an engine mechanism and
+not History: History only records what it does.
+
+- **Reads:** Life's LabourSupply provider, `hours(person, role, day)` and `reservationWage?` (provider is Life's).
+- **Acts:** for each accepted `work` intention, one `{type: 'hire', post, holder, cause: <intention event id>}`
+  through Settlement's `apply`, all inside one `kernel.transaction`; Settlement emits `settlement.post_filled` and
+  `shared.action.outcome`. Which intentions count as accepted, and the phase it runs in, follow the contract and
+  the kernel's `data/order.json`, not this text.
+- **Never:** decides or writes a wage (Economy's rule; the floor is Rex's, ECON-24); writes Life, Cognition or
+  Settlement state other than through `apply`. In a game the game adapter plays this role, never an engine.
+
+S6's Gate adds, from the record: **H1** every `settlement.post_filled` has a `hire` whose `cause` is an accepted
+`work` intention's event id, and every accepted intention has exactly one `hire` (A4 trace on this seam); **H2** a
+`hire` rejected by `apply` leaves no partial state (transaction rolled back; snapshot hash before = after);
+**H3** no wage-bearing field is written by the host (the record attributes every wage write to an Economy process);
+**H4** G-inert with the observer attached and detached.
 
 ## 4. The mechanisms (PLATFORM §7 contracts; proposed rows for the registry keeper)
 
