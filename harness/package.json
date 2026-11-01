@@ -1,0 +1,23 @@
+{
+  "name": "@rex/history-harness",
+  "version": "0.0.1",
+  "description": "X1-0: the History observer attached to the kernel's three-engine harness (seam S0).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rex/history": "file:..",
+    "@rex/kernel": "file:../../kernel",
+    "@rex/kernel-harness": "file:../../kernel/harness",
+    "@rex/realism": "file:../../realism",
+    "@rex/settlement": "file:../../settlement",
+    "@rex/economy": "file:../../economy"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.5"
+  }
+}

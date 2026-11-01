@@ -1,0 +1,14 @@
+{
+  "engine": "economy",
+  "processes": [
+    {
+      "id": "economy.tick",
+      "mechanisms": ["economy.market.clear"],
+      "writes": [],
+      "reads": ["history.record"],
+      "period": "day",
+      "phase": "day.economy"
+    }
+  ],
+  "ports": []
+}
