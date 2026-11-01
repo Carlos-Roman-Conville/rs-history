@@ -338,8 +338,17 @@ not History: History only records what it does.
 - **Reads:** Life's LabourSupply provider, `hours(person, role, day)` and `reservationWage?` (provider is Life's).
 - **Acts:** for each accepted `work` intention, one `{type: 'hire', post, holder, cause: <intention event id>}`
   through Settlement's `apply`, all inside one `kernel.transaction`; Settlement emits `settlement.post_filled` and
-  `shared.action.outcome`. Which intentions count as accepted, and the phase it runs in, follow the contract and
-  the kernel's `data/order.json`, not this text.
+  `shared.action.outcome`. The phase it runs in follows the kernel's `data/order.json`, not this text.
+- **Accepted, from the sources (2026-11-01):** the worker's side is the mind's decision. A `work` intention is
+  accepted on the worker's side while it is the person's latest `work`/`refuse_work` intention and LabourSupply
+  `hours(person, role, day) > 0` (Cognition DESIGN §2.4; CONTRACTS §16, §18, §19). `refuse_work` closes it (hours 0).
+  `reservationWage?` is **not** a host filter: Settlement declined a staffing rule on it and only Economy's wage
+  quote reads it (CONTRACTS §19; ECON-24 is Rex's). "Not hired" is `failed` from the declining side, the employer's
+  decision or Economy's clearing (Cognition §2.4), never the host's.
+- **Open for Rex (HIST-12):** no source gives the employer's side (whether an employer takes the offer) or which
+  post a `work` intention maps to (`terms` are numbers only; the post is not in them). Until Rex answers, the host
+  issues no `hire` except where the run's fixture names the post per person (S6's fixture, Catalogue data), and the
+  unit says so; it never picks among vacant posts by its own rule.
 - **Never:** decides or writes a wage (Economy's rule; the floor is Rex's, ECON-24); writes Life, Cognition or
   Settlement state other than through `apply`. In a game the game adapter plays this role, never an engine.
 
