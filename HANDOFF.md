@@ -1,6 +1,6 @@
-﻿## State
+## State
 
-Units 2848-2853 are done: record schema, observer, aggregate, indicator scores, ensemble, and X1 acceptance. Unit 2854 (S0 harness, `harness/`) is queued.
+Units 2848-2853 are done: record schema, observer, aggregate, indicator scores, ensemble, and X1 acceptance. Task 2854 is done (commit `35ce076`): S0 harness in `harness/`, five 3-day S0 tests, and `harness/S0-REPORT.md` projecting 46,720 records over 730 days. N11 compaction is not needed for this harness.
 
 Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 
@@ -8,9 +8,15 @@ Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 
 ## Next
 
-2854: build the S0 harness in `harness/`, then address the seams in DESIGN §6.
+Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (the S0 tests use three days):
+- G-inert: identical midnight snapshot hashes and `Midnight` rows with and without the observer.
+- Replay: byte-identical record files for the same seed, with matching manifest hash.
+- Measurement: daily money, goods produced/consumed/total per good, and hamlet population series; aggregates equal the harness's `Midnight` values exactly.
+- G-unread: check every `kernel.json` and reject a deliberately bad fixture reading `history.record`.
 
 ## Blocked
+
+- kernel-harness: export the hamlet and horse-stable examples; `harness/x1-0.ts` imports them by relative path from `../../settlement` and `../../realism`.
 
 - kernel: incremental bus read. Expose detached EventRecords since a cursor, including phase, position and sequence; `since(cursor)` returns only KernelEvents.
 - 2848 BoundaryInput schema: DESIGN has no detailed schema; implementation requires `label` (researched/estimate/fiction) and `source`, preserving further canonical JSON fields. Confirm the complete boundary contract before building loaders.
@@ -18,6 +24,8 @@ Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 - Timing mismatch: A1 currently requires t0 stock rows to check day 1; observer-only records omit t0. Resolve the initial-state contract before relying on A1 for harness acceptance.
 
 ## Gotchas
+
+- `harness/S0-REPORT.md` is rewritten only when `S0_WRITE_REPORT` is set (or the file is missing).
 
 Observer reads: full copy per checkpoint via `bus.state()` because `since(cursor)` omits required ordering metadata (phase, position, sequence); no incremental EventRecord API exists.
 
