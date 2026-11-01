@@ -353,14 +353,15 @@ not History: History only records what it does.
   perceived affordances (IF-46; rs-platform 36ed07e; payload unchanged from cognition f53f16d:
   `{ id, mind, action, target?, t, expectedOutcomes, status, terms? }`; `terms` numbers only; the `role?` field is
   withdrawn); a post id resolves directly; no `target` → `failed`, reason "no target"; the host takes
-  the first vacant post of that role by stable id, deterministic under replay. **Interim, until that field exists:**
-  the host hires only where the run's fixture names the post per person. Not accepted (hours 0, no target, no vacant
+  the first vacant post of that role by stable id, deterministic under replay. Since `target` already exists, the earlier
+  interim (hire only where the run's fixture names the post per person) is superseded; S6's fixture may still name
+  posts as the minds' `target` values. Not accepted (hours 0, no target, no vacant
   post) resolves `failed` with the reason among the stimuli (C-Q25). No wage comparison until Rex's wage rule
   (ECON-24).
 
 S6's Gate adds, from the record: **H1** every `settlement.post_filled` has a `hire` whose `cause` is an accepted
 `work` intention's event id, every accepted intention (as decided above) has exactly one `hire` to the first vacant
-post of its role by stable id (interim: the post the fixture names), and every other `work` intention has a `failed` outcome with its reason (A4 trace on this seam); **H2** a
+post of its role by stable id (or the post its `target` names), and every other `work` intention has a `failed` outcome with its reason (A4 trace on this seam); **H2** a
 `hire` rejected by `apply` leaves no partial state (transaction rolled back; snapshot hash before = after);
 **H3** no wage-bearing field is written by the host (the record attributes every wage write to an Economy process);
 **H4** G-inert with the observer attached and detached.
