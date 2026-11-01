@@ -85,6 +85,19 @@ history-runs/<target>/<run_id>/
 | `checkpoints` | `{period_ms, first_ms}` | the sampling grid (§2: 10 y for H1/H2, 25 y for H3/H4, 1 day for X1) |
 | `resolution_plan` | `{entity, mode, from_t}`[] | which entities ran fine or coarse when, as the host decided (History records it, never decides it) |
 
+**Manifest shape (keeper, 2026-11-01, as built in 2848):** `manifest.json` is the RunHeader plus
+`hashes: {<file>: fnv1a64(text)}` for the four record files; that nested shape is the contract.
+
+**BoundaryInput (keeper, 2026-11-01; Rex allowed boundary inputs, HIST-Q2):** `{id, kind: pathogen | arrival |
+forcing | other, target: <engine>, port: <declared boundary input port of that engine>, region_edge: <region id>,
+schedule: [{t, value, unit}] | {series: <dataset path>, unit}, label: researched | estimate | fiction, source, note?}`.
+It names an input at the region's edge only: what arrives (a pathogen introduced, a ship, a forcing series), never an
+outcome (deaths, a famine, an abandonment). The owning engine's own boundary port receives it; History only records
+it in the header. Engines that have no boundary port yet get one through their keeper (HIST-6).
+
+**Initial state (keeper, 2026-11-01):** the observer writes one Observation set at attach time `t = scheduler.t`
+(normally 0) before the first checkpoint, so every record has its t0 stocks; reading at t0 is as inert as any read.
+
 ### 1.2 EventEntry: what occurred
 
 Copied from the kernel bus, never invented. One row per `EventRecord` on the `EventBus`:

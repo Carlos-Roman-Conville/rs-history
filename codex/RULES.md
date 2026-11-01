@@ -5,7 +5,8 @@
 2. **History is the backend record (Rex, 2026-10-31).** Never write code that changes simulated state, feeds a value
    back into an engine, draws a random number, emits a kernel event or joins a transaction. History reads, copies,
    aggregates and scores; nothing else.
-3. `src/` imports only `@rex/kernel` and its own files. Engines are reached only through `harness/` packages.
+3. `src/` imports only `@rex/kernel`, Node built-ins (`node:fs`, `node:path`, `node:os` for the record files) and its
+   own files. Engines are reached only through `harness/` packages.
 4. Deterministic: no `Math.random`, no `Date.now`; canonical JSON (kernel `canonical`) for anything hashed or written;
    every output sorted by a stated key, never by object-key order.
 5. Never invent a value. A missing quantity is `null` and is counted in reports; a missing indicator is excluded from
