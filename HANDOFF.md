@@ -8,16 +8,17 @@ Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 
 ## Next
 
-Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (the S0 tests use three days):
+Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (the S0 tests use three days; a thirty-day S0 run takes about 16 min):
 - G-inert: identical midnight snapshot hashes and `Midnight` rows with and without the observer.
 - Replay: byte-identical record files for the same seed, with matching manifest hash.
 - Measurement: daily money, goods produced/consumed/total per good, and hamlet population series; aggregates equal the harness's `Midnight` values exactly.
 - G-unread: check every `kernel.json` and reject a deliberately bad fixture reading `history.record`.
 
+- Then DESIGN.md section 3.7: S1 soil to plant (N1, N2), S2 plant to inventory (N3), S3 inventory to body (N4), S4 body to mind (N5), onward to S5-S7; each waits on its Needs, held by other keepers.
+
 ## Blocked
 
 - kernel-harness: export the hamlet and horse-stable examples; `harness/x1-0.ts` imports them by relative path from `../../settlement` and `../../realism`.
-
 - kernel: incremental bus read. Expose detached EventRecords since a cursor, including phase, position and sequence; `since(cursor)` returns only KernelEvents.
 - 2848 BoundaryInput schema: DESIGN has no detailed schema; implementation requires `label` (researched/estimate/fiction) and `source`, preserving further canonical JSON fields. Confirm the complete boundary contract before building loaders.
 - Keeper decides whether RULES #3 allows Node `fs` in `writer.ts` and `reader.ts` (both also use `node:path`), and whether the manifest's nested `hashes: {file: hash}` shape is the §1 contract.
@@ -26,9 +27,7 @@ Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (t
 ## Gotchas
 
 - `harness/S0-REPORT.md` is rewritten only when `S0_WRITE_REPORT` is set (or the file is missing).
-
-Observer reads: full copy per checkpoint via `bus.state()` because `since(cursor)` omits required ordering metadata (phase, position, sequence); no incremental EventRecord API exists.
-
+- Observer reads: full copy per checkpoint via `bus.state()` because `since(cursor)` omits required ordering metadata (phase, position, sequence); no incremental EventRecord API exists.
 - `share` takes `quantity: [part, whole]` (`src/aggregate.ts`).
 - `count` returns null when a member has no row; present rows with null values are excluded from the count (`src/aggregate.ts`).
 - `binomialTail` is one-sided and `signTest` is two-sided (`src/ensemble.ts`).
