@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { validateRunHeader, validateEventEntry, validateObservation, validateAggregate, validateSnapshotRef, validateScore } from '../src/record.ts'
+import { validateBoundaryInput, validateRunHeader, validateEventEntry, validateObservation, validateAggregate, validateSnapshotRef, validateScore } from '../src/record.ts'
 import { header, event, observation, aggregate, snapshot, score, ensemble } from './fixtures.ts'
 
 const cases = [
+  ['BoundaryInput', { ...header.boundary[0], note: 'documented input' }, validateBoundaryInput],
   ['RunHeader', header, validateRunHeader], ['EventEntry', event, validateEventEntry],
   ['Observation', observation, validateObservation], ['Aggregate', aggregate, validateAggregate],
   ['SnapshotRef', snapshot, validateSnapshotRef], ['Score', score, validateScore], ['ensemble Score', ensemble, validateScore],
@@ -50,5 +51,26 @@ it('ensemble scores require every ensemble statistic and verdict', () => {
     const row = { ...ensemble } as Record<string, unknown>
     delete row[key]
     expect(validateScore(row).length).toBeGreaterThan(0)
+  }
+})
+
+it('BoundaryInput accepts both schedule forms and rejects invalid schedule fields', () => {
+  const boundary = header.boundary[0]
+  for (const kind of ['pathogen', 'arrival', 'forcing', 'other']) {
+    expect(validateBoundaryInput({ ...boundary, kind })).toEqual([])
+  }
+  expect(validateBoundaryInput({ ...boundary, schedule: { series: 'catalogue/rain.json', unit: 'mm' } })).toEqual([])
+  for (const schedule of [
+    [{ t: -1, value: 1, unit: 'mm' }], [{ t: 0.5, value: 1, unit: 'mm' }],
+    [{ t: 0, value: Infinity, unit: 'mm' }], [{ t: 0, value: null, unit: 'mm' }],
+    [{ t: 0, value: 1, unit: '' }], [{ t: 0, value: 1 }],
+    { series: '', unit: 'mm' }, { series: 'data', unit: '' }, { series: 'data' },
+    { series: 'data', unit: 'mm', t: 0 }, null,
+  ]) expect(validateBoundaryInput({ ...boundary, schedule })).toContain('schedule: invalid value')
+  for (const key of Object.keys(boundary)) {
+    const missing = { ...boundary } as Record<string, unknown>
+    delete missing[key]
+    expect(validateBoundaryInput(missing)).toContain(`${key}: invalid value`)
+    expect(validateRunHeader({ ...header, boundary: [missing] })).toContain('boundary: invalid value')
   }
 })

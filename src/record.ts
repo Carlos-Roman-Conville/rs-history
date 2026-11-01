@@ -5,7 +5,12 @@ export type EventClass = typeof eventClasses[number]
 export type Mode = 'fine' | 'coarse'
 export type Value = number | string[] | null
 export type DataLabel = 'researched' | 'estimate' | 'fiction'
-export interface BoundaryInput { label: DataLabel; source: string; [key: string]: unknown }
+export interface BoundaryInput {
+  id: string; kind: 'pathogen' | 'arrival' | 'forcing' | 'other'
+  target: string; port: string; region_edge: string
+  schedule: { t: number; value: number; unit: string }[] | { series: string; unit: string }
+  label: DataLabel; source: string; note?: string
+}
 export interface Scope { kind: 'person' | 'household' | 'settlement' | 'polity' | 'region' | 'world'; id: string }
 export interface RunHeader {
   run_id: string; target: string; seed: number
@@ -56,11 +61,19 @@ function validate(input: unknown, fields: Fields): string[] {
   for (const key of Object.keys(input)) if (!Object.hasOwn(fields, key)) errors.push(`${key}: unknown field`)
   return errors.sort()
 }
+export const validateBoundaryInput = (input: unknown): string[] => validate(input, {
+  id: str, kind: choice(['pathogen', 'arrival', 'forcing', 'other']),
+  target: str, port: str, region_edge: str,
+  schedule: v => Array.isArray(v)
+    ? array(shape({ t: natural, value: finite, unit: str }))(v)
+    : shape({ series: str, unit: str })(v),
+  label, source: str, note: optional(str),
+})
 export function validateRunHeader(input: unknown): string[] {
   const errors = validate(input, {
     run_id: runId, target, seed: integer,
     engines: array(shape({ id: str, package: str, version: str, commit: str })), config_hash: hash, init_bundle: str,
-    boundary: array(v => object(v) && label(v.label) && str(v.source) && json(v)),
+    boundary: array(v => validateBoundaryInput(v).length === 0),
     epoch: shape({ sim_t0: choice([0]), date: finite, calendar_note: str }),
     checkpoints: shape({ period_ms: v => natural(v) && v !== 0, first_ms: natural }),
     resolution_plan: array(shape({ entity: str, mode, from_t: natural })),

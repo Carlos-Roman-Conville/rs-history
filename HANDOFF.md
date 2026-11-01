@@ -4,15 +4,14 @@ Units 2848-2853 are done: record schema, observer, aggregate, indicator scores, 
 
 Keeper's handoff: `E:/AI Programs/HQ/handoffs/history/HANDOFF.md`.
 
-2848 implementation notes: writer/reader use synchronous Node filesystem APIs (RULES #3 exception awaits keeper decision). The manifest is RunHeader plus nested `hashes: { filename: fnv1a64(text) }` for the four record files. `fail(reason)` marks the run non-reportable without I/O; the observer now catches recording errors and calls it. Score fields allow null for unavailable measurements; ensemble sign consistency is a count. Payload selection and byte limits belong to the observer; the record accepts exactly one of `payload` or `payload_hash`.
+Record notes: writer/reader use synchronous Node filesystem APIs (allowed by RULES #3). The manifest is RunHeader plus nested `hashes: { filename: fnv1a64(text) }` for the four record files. `fail(reason)` marks the run non-reportable without I/O; the observer now catches recording errors and calls it. Score fields allow null for unavailable measurements; ensemble sign consistency is a count. Payload selection and byte limits belong to the observer; the record accepts exactly one of `payload` or `payload_hash`.
+
+Observer records initial reads and optional snapshot at attach time, then checkpoints. A1 uses recorded t0 stocks; missing stocks fail with the day named. Boundary inputs follow DESIGN 1.1's explicit schema.
 
 ## Next
 
 Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (the S0 tests use three days; a thirty-day S0 run takes about 16 min):
-- G-inert: identical midnight snapshot hashes and `Midnight` rows with and without the observer.
-- Replay: byte-identical record files for the same seed, with matching manifest hash.
-- Measurement: daily money, goods produced/consumed/total per good, and hamlet population series; aggregates equal the harness's `Midnight` values exactly.
-- G-unread: check every `kernel.json` and reject a deliberately bad fixture reading `history.record`.
+- X1-0: verify G-inert midnight hashes, replay bytes, daily money/goods/population measurements, and G-unread registry checks.
 
 - Then DESIGN.md section 3.7: S1 soil to plant (N1, N2), S2 plant to inventory (N3), S3 inventory to body (N4), S4 body to mind (N5), onward to S5-S7; each waits on its Needs, held by other keepers.
 
@@ -20,9 +19,6 @@ Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (t
 
 - kernel-harness: export the hamlet and horse-stable examples; `harness/x1-0.ts` imports them by relative path from `../../settlement` and `../../realism`.
 - kernel: incremental bus read. Expose detached EventRecords since a cursor, including phase, position and sequence; `since(cursor)` returns only KernelEvents.
-- 2848 BoundaryInput schema: DESIGN has no detailed schema; implementation requires `label` (researched/estimate/fiction) and `source`, preserving further canonical JSON fields. Confirm the complete boundary contract before building loaders.
-- Keeper decides whether RULES #3 allows Node `fs` in `writer.ts` and `reader.ts` (both also use `node:path`), and whether the manifest's nested `hashes: {file: hash}` shape is the §1 contract.
-- Timing mismatch: A1 currently requires t0 stock rows to check day 1; observer-only records omit t0. Resolve the initial-state contract before relying on A1 for harness acceptance.
 
 ## Gotchas
 
@@ -32,6 +28,5 @@ Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (t
 - `count` returns null when a member has no row; present rows with null values are excluded from the count (`src/aggregate.ts`).
 - `binomialTail` is one-sided and `signTest` is two-sided (`src/ensemble.ts`).
 - `sign_consistency` is a summed count of checkpoint majorities, not a fraction (`src/ensemble.ts`).
-- The observer's `first_ms: 0` does not sample t0 (kernel offsets run after registration), so observer records have no initial state; A1 starts at day 1, the first recorded day for daily sampling, but still requires t0 stocks (`src/observer.ts`, `src/x1/acceptance.ts`).
 - Unmapped event payloads are written as `payload_hash` only (`src/observer.ts`).
 - During observer recording, writer errors go to `writer.fail` and are never thrown into the scheduler, even if `fail` throws; direct writer API calls can throw (`src/observer.ts`, `src/writer.ts`).

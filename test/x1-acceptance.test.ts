@@ -1,8 +1,8 @@
 import { afterEach, expect, it } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { resolve, join } from 'node:path'
-import { canonical } from '@rex/kernel'
-import { openRun, readRun, x1, compareEvents } from '../src/index.ts'
+import { canonical, Scheduler, EventBus } from '@rex/kernel'
+import { attachObserver, openRun, readRun, x1, compareEvents } from '../src/index.ts'
 import type { RunRecord, Observation, EventEntry, SnapshotRef } from '../src/index.ts'
 import { header, observation, event, snapshot } from './fixtures.ts'
 
@@ -124,4 +124,25 @@ it('G-inert compares all checkpoint and participant hashes, reporting changed or
   expect(x1.gInert(snapshots, [snapshot]).failures).toEqual(['day 1: missing checkpoint'])
   expect(x1.gInert(snapshots, [snapshot, snapshot]).failures.join()).toContain('day 0: duplicate detached')
   expect(x1.gInert([], []).pass).toBe(false)
+})
+
+it('V11 A1 uses observer-written initial stocks and names day 0 when one is missing', () => {
+  const { rows, stores } = mass()
+  const dir = mkdtempSync(join(root, 'x1-test-')); dirs.push(dir)
+  const writer = openRun(dir, header), bus = new EventBus()
+  const scheduler = new Scheduler({ emit: bus.emit, order: { phases: ['record'], order: { record: ['history.record'] } } })
+  const quantities = [...new Set(rows.map(o => o.quantity))]
+  attachObserver({ scheduler, bus, writer, checkpoint: { first_ms: 0, period_ms: day }, classes: { version: 1, map: [] },
+    reads: quantities.map(quantity => ({ ...obs(quantity, 0, 0), port: quantity,
+      read: () => rows.find(o => o.quantity === quantity && o.t === scheduler.t)?.value ?? null,
+    })),
+  })
+  scheduler.runUntil(day)
+  writer.close()
+  const run = readRun(dir)
+  expect(x1.a1MassCloses(run, stores, 0).pass).toBe(true)
+  run.series = run.series.filter(o => !(o.t === 0 && o.quantity === 'soil.N'))
+  const check = x1.a1MassCloses(run, stores, 0)
+  expect(check.pass).toBe(false)
+  expect(check.failures.join()).toContain('day 0 soil.N')
 })

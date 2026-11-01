@@ -22,7 +22,8 @@ export type MassStores = Record<string, Record<'soil' | 'plant' | 'inventory' | 
 }>>
 /** Flows at t are amounts during (t - day, t], in the stock's unit, not rates
  * or cumulative counters. Internal transfers appear once on each side. Checks
- * every day from t0 through the last recorded checkpoint (including gaps).
+ * each daily interval using the observer-recorded t0 stocks for day 1, through
+ * the last recorded checkpoint (including gaps). Missing t0 rows fail as day 0.
  */
 export function a1MassCloses(run: RunRecord, stores: MassStores, tolerance: number | Record<string, number>) {
   const failures: string[] = [], balances: { day: number; quantity: string; residual: number | null }[] = []

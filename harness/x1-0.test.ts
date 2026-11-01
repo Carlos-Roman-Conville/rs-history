@@ -50,16 +50,17 @@ describe('X1-0 observer on the three-engine harness', () => {
       }
     }
     expect(record.series.map(o => o.t)).toEqual(record.series.map(o => o.t).sort((a, b) => a - b))
-    expect([...new Set(record.series.map(o => o.t))]).toEqual(first.midnights.map(m => m.t))
+    expect([...new Set(record.series.map(o => o.t))]).toEqual([0, ...first.midnights.map(m => m.t)])
     expect(first.midnights.map(m => m.t)).toEqual([1, 2, 3].map(d => d * DAY))
     const sums = aggregateSeries(record, {
       measure: 'goods.total.sum', fn: 'sum', quantity: quantities.total, targets: [WORLD],
       membersOf: (scope) => scope.kind === 'world' ? goods.map(goodScope) : [],
     })
-    expect(sums).toHaveLength(days)
+    expect(sums).toHaveLength(days + 1)
     expect(sums.every(a => a.value !== null)).toBe(true)
     expect(sumIdentity(sums, record)).toEqual([])
-    expect(record.snapshots.map(s => s.participants)).toEqual(first.hashes)
+    expect(record.snapshots.map(s => s.t)).toEqual([0, DAY, 2 * DAY, 3 * DAY])
+    expect(record.snapshots.slice(1).map(s => s.participants)).toEqual(first.hashes)
   })
 
   it('G-unread: the kernel check passes on History kernel.json and fails a fixture economy that reads history.record', () => {

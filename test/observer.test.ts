@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { Scheduler, EventBus, streams, canonical, fnv1a64 } from '@rex/kernel'
-import { attachObserver, openRun, readRun, type RunWriter, type EventEntry, type Observation, type SnapshotRef, type ObserverRead } from '../src/index.ts'
+import { INITIAL, attachObserver, openRun, readRun, type RunWriter, type EventEntry, type Observation, type SnapshotRef, type ObserverRead } from '../src/index.ts'
 import { header } from './fixtures.ts'
 
 const classes = { version: 1 as const, map: [{ source: 'toy.fast', type: 'draw', class: 'economic' as const }] }
@@ -44,6 +44,11 @@ it('V1 G-inert preserves draws, events, RNG state and engine hashes at all 100 c
   attachObserver({ ...recorded, ...rows, checkpoint, classes,
     snapshot: () => ({ kernel_hash: recorded.hash(), participants: { toy: recorded.hash() } }),
   })
+  expect(INITIAL).toBe('initial')
+  expect(rows.series).toEqual([{ ...recorded.reads[0], read: undefined, t: 0, value: 0, mode: 'fine' }].map(({ read, ...row }) => row))
+  expect(rows.snapshots).toEqual([{ t: 0, kernel_hash: plain.hash(), participants: { toy: plain.hash() } }])
+  expect(recorded.random.state()).toEqual(plain.random.state())
+  expect(recorded.bus.state()).toEqual(plain.bus.state())
   expect(register).toHaveBeenCalledTimes(1)
   expect(register.mock.calls[0][0]).toMatchObject({ id: 'history.record', phase: 'record', readonly: true, mechanisms: [], period: 10, offset: 10 })
   for (let t = 10; t <= 1000; t += 10) {
@@ -54,7 +59,7 @@ it('V1 G-inert preserves draws, events, RNG state and engine hashes at all 100 c
     expect(recorded.random.state()).toEqual(plain.random.state())
     expect(rows.snapshots.at(-1)).toEqual({ t, kernel_hash: plain.hash(), participants: { toy: plain.hash() } })
   }
-  expect(rows.series).toHaveLength(100)
+  expect(rows.series).toHaveLength(101)
   expect(rows.events).toHaveLength(200)
 })
 
@@ -66,9 +71,9 @@ it('V4 drains every event once in kernel order before observing the same instant
     reads: [{ ...run.reads[0], mode: 'coarse', read() { calls.push(`read:${run.scheduler.t}`); return run.state.total } }],
   })
   run.scheduler.runUntil(50)
-  expect(rows.series.map(o => o.t)).toEqual([30, 50])
+  expect(rows.series.map(o => o.t)).toEqual([0, 30, 50])
   expect(rows.series.every(o => o.mode === 'coarse')).toBe(true)
-  expect(calls).toEqual([...Array(2).fill('event:10'), ...Array(2).fill('event:20'), ...Array(2).fill('event:30'), 'read:30', ...Array(2).fill('event:40'), ...Array(2).fill('event:50'), 'read:50'])
+  expect(calls).toEqual(['read:0', ...Array(2).fill('event:10'), ...Array(2).fill('event:20'), ...Array(2).fill('event:30'), 'read:30', ...Array(2).fill('event:40'), ...Array(2).fill('event:50'), 'read:50'])
   expect(rows.series.at(-1)!.value).toBe(run.state.total)
   expect(rows.events).toEqual(run.bus.state().records.map(({ event: e, phase, position, sequence }) => {
     const { payload, ...identity } = e
@@ -87,9 +92,9 @@ it('missing reads are null and counted; every read runs in declared order at lat
   ] })
   run.scheduler.runUntil(20)
   value.push('technology/b')
-  expect(order).toEqual(['throws', 'null', 'ok', 'throws', 'null', 'ok'])
-  expect(rows.series.map(o => o.value)).toEqual([null, null, ['technology/a'], null, null, ['technology/a']])
-  expect(status).toMatchObject({ stopped: false, readFailures: 2, missingValues: 4 })
+  expect(order).toEqual(Array(3).fill(['throws', 'null', 'ok']).flat())
+  expect(rows.series.map(o => o.value)).toEqual(Array(3).fill([null, null, ['technology/a']]).flat())
+  expect(status).toMatchObject({ stopped: false, readFailures: 3, missingValues: 6 })
   expect(rows.writer.fail).not.toHaveBeenCalled()
 })
 
@@ -120,4 +125,21 @@ it.each(['bus', 'event', 'snapshot', 'fail'] as const)('G-inert contains %s fail
   expect(status.stopped).toBe(true)
   expect(run.state.ticks).toBe(100)
   expect(rows.writer.fail).toHaveBeenCalledTimes(1)
+})
+
+it('INITIAL samples the current attach time and drains only existing bus records once', () => {
+  const run = toy(), rows = memory()
+  run.scheduler.runUntil(20)
+  const before = run.bus.state(), random = run.random.state(), hash = run.hash()
+  attachObserver({ ...run, ...rows, checkpoint, classes })
+  expect(run.scheduler.t).toBe(20)
+  expect(run.hash()).toBe(hash)
+  expect(run.random.state()).toEqual(random)
+  expect(run.bus.state()).toEqual(before)
+  expect(rows.series.map(o => o.t)).toEqual([20])
+  expect(rows.events.map(e => e.id)).toEqual(before.records.map(r => r.event.id))
+  run.scheduler.runUntil(30)
+  expect(rows.series.map(o => o.t)).toEqual([20, 30])
+  expect(new Set(rows.events.map(e => e.id)).size).toBe(rows.events.length)
+  expect(rows.events).toHaveLength(run.bus.state().records.length)
 })
