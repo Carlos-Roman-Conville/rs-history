@@ -345,15 +345,15 @@ not History: History only records what it does.
   `reservationWage?` is **not** a host filter: Settlement declined a staffing rule on it and only Economy's wage
   quote reads it (CONTRACTS §19; ECON-24 is Rex's). "Not hired" is `failed` from the declining side, the employer's
   decision or Economy's clearing (Cognition §2.4), never the host's.
-- **Open for Rex (HIST-12):** no source gives the employer's side (whether an employer takes the offer) or which
-  post a `work` intention maps to (`terms` are numbers only; the post is not in them). Until Rex answers, the host
-  issues no `hire` except where the run's fixture names the post per person (S6's fixture, Catalogue data), and the
-  unit says so; it never picks among vacant posts by its own rule.
-- **Never:** decides or writes a wage (Economy's rule; the floor is Rex's, ECON-24); writes Life, Cognition or
-  Settlement state other than through `apply`. In a game the game adapter plays this role, never an engine.
+- **Decided by the controller (2026-11-01, contract `shared.host.work_resolution`, rs-platform 90c1489; declared
+  default for Rex to overrule, HIST-12):** accepted = LabourSupply `hours(person, role, day) > 0` (availability
+  included) and a vacant post of the intention's role; the post is the first vacant post of that role by stable id;
+  no role, or no vacant post, resolves `failed` with the reason among the stimuli; no wage comparison until Rex
+  decides ECON-24. (`terms` are numbers only, Cognition §2.4: how the role reaches the host is the contract's.)
 
 S6's Gate adds, from the record: **H1** every `settlement.post_filled` has a `hire` whose `cause` is an accepted
-`work` intention's event id, and every accepted intention has exactly one `hire` (A4 trace on this seam); **H2** a
+`work` intention's event id, every accepted intention (as decided above) has exactly one `hire` to the first vacant
+post of its role by stable id, and every other `work` intention has a `failed` outcome with its reason (A4 trace on this seam); **H2** a
 `hire` rejected by `apply` leaves no partial state (transaction rolled back; snapshot hash before = after);
 **H3** no wage-bearing field is written by the host (the record attributes every wage write to an Economy process);
 **H4** G-inert with the observer attached and detached.
