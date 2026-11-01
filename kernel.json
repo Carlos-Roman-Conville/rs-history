@@ -1,0 +1,14 @@
+{
+  "engine": "history",
+  "processes": [
+    {
+      "id": "history.record",
+      "mechanisms": ["history.record.backend"],
+      "writes": [],
+      "reads": [],
+      "period": "checkpoint",
+      "phase": "record"
+    }
+  ],
+  "ports": []
+}

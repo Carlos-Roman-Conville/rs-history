@@ -1,0 +1,23 @@
+{
+  "name": "@rex/history",
+  "version": "0.0.1",
+  "description": "The History engine: the backend record of what occurred in a run and the validation harness (indicators, ensembles, baselines). Never read by any mechanism, never determines what happens (Rex, 2026-10-31).",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rex/kernel": "file:../kernel"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.5"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
