@@ -345,15 +345,19 @@ not History: History only records what it does.
   `reservationWage?` is **not** a host filter: Settlement declined a staffing rule on it and only Economy's wage
   quote reads it (CONTRACTS §19; ECON-24 is Rex's). "Not hired" is `failed` from the declining side, the employer's
   decision or Economy's clearing (Cognition §2.4), never the host's.
-- **Decided by the controller (2026-11-01, contract `shared.host.work_resolution`, rs-platform 90c1489; declared
-  default for Rex to overrule, HIST-12):** accepted = LabourSupply `hours(person, role, day) > 0` (availability
-  included) and a vacant post of the intention's role; the post is the first vacant post of that role by stable id;
-  no role, or no vacant post, resolves `failed` with the reason among the stimuli; no wage comparison until Rex
-  decides ECON-24. (`terms` are numbers only, Cognition §2.4: how the role reaches the host is the contract's.)
+- **Decided by the controller (2026-11-01, contract `shared.host.work_resolution`, rs-platform 90c1489; HIST-12 is
+  dispatch, not Rex's):** (a) **employer side:** until Society's organisation actors exist (DUP-58), a business is
+  not a mind, so **a vacant post is acceptance**: a provisional host rule (evidence level 4), replaced by the
+  organisation's own decision when Society lands, never a staffing formula inside Settlement. (b) **which post:**
+  the intention's `terms` gain a `role` field (Cognition contract amendment, registry records it); the host takes
+  the first vacant post of that role by stable id, deterministic under replay. **Interim, until that field exists:**
+  the host hires only where the run's fixture names the post per person. Not accepted (hours 0, no role, no vacant
+  post) resolves `failed` with the reason among the stimuli (C-Q25). No wage comparison until Rex's wage rule
+  (ECON-24).
 
 S6's Gate adds, from the record: **H1** every `settlement.post_filled` has a `hire` whose `cause` is an accepted
 `work` intention's event id, every accepted intention (as decided above) has exactly one `hire` to the first vacant
-post of its role by stable id, and every other `work` intention has a `failed` outcome with its reason (A4 trace on this seam); **H2** a
+post of its role by stable id (interim: the post the fixture names), and every other `work` intention has a `failed` outcome with its reason (A4 trace on this seam); **H2** a
 `hire` rejected by `apply` leaves no partial state (transaction rolled back; snapshot hash before = after);
 **H3** no wage-bearing field is written by the host (the record attributes every wage write to an Economy process);
 **H4** G-inert with the observer attached and detached.
