@@ -349,11 +349,12 @@ not History: History only records what it does.
   dispatch, not Rex's):** (a) **employer side:** until Society's organisation actors exist (DUP-58), a business is
   not a mind, so **a vacant post is acceptance**: a provisional host rule (evidence level 4), replaced by the
   organisation's own decision when Society lands, never a staffing formula inside Settlement. (b) **which post:**
-  the `work` intention carries the role or post handle in its existing `target` field (payload unchanged from
-  cognition f53f16d: `{ id, mind, action, target?, t, expectedOutcomes, status, terms? }`; no `target` → `failed`,
-  reason "no role"; the controller withdrew a separate `role` field); the host takes
+  the `work` intention carries a role id or a post id in its existing `target` field, chosen by the mind from its
+  perceived affordances (IF-46; rs-platform 36ed07e; payload unchanged from cognition f53f16d:
+  `{ id, mind, action, target?, t, expectedOutcomes, status, terms? }`; `terms` numbers only; the `role?` field is
+  withdrawn); a post id resolves directly; no `target` → `failed`, reason "no target"; the host takes
   the first vacant post of that role by stable id, deterministic under replay. **Interim, until that field exists:**
-  the host hires only where the run's fixture names the post per person. Not accepted (hours 0, no role, no vacant
+  the host hires only where the run's fixture names the post per person. Not accepted (hours 0, no target, no vacant
   post) resolves `failed` with the reason among the stimuli (C-Q25). No wage comparison until Rex's wage rule
   (ECON-24).
 
