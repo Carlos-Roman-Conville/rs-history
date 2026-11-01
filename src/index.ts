@@ -5,6 +5,8 @@ export { openRun, type RunWriter } from './writer.ts'
 export { readRun, type RunRecord } from './reader.ts'
 export * from './classes.ts'
 export * from './aggregate.ts'
+export * from './dataset.ts'
+export * from './scores.ts'
 
 /** The engine prefix every History id carries. */
 export const ENGINE = 'history'
