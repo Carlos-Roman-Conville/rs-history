@@ -1,7 +1,7 @@
 # Rules for Codex (and any belt worker) in `Toolchain/history`
 
-1. Read `DESIGN.md` (the sections your task names) first. It is the spec. Disagree by parking in `HANDOFF.md`
-   Blocked, never by changing DESIGN.md.
+1. Read `PLAN.md` (the approved working design, Rex 2026-11-02) and the sections your task names first; `DESIGN.md` is
+   reference, cited by PLAN. Disagree by parking in `HANDOFF.md` Blocked, never by changing DESIGN.md.
 2. **History is the backend record (Rex, 2026-10-31).** Never write code that changes simulated state, feeds a value
    back into an engine, draws a random number, emits a kernel event or joins a transaction. History reads, copies,
    aggregates and scores; nothing else.
