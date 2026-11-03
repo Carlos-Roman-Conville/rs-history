@@ -2,8 +2,8 @@ import { afterEach, expect, it } from 'vitest'
 import { mkdtempSync, readFileSync, rmSync, existsSync, appendFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { canonical } from '@rex/kernel'
-import { openRun, readRun } from '../src/index.ts'
+import { canonical, fnv1a64 } from '@rex/kernel'
+import { openRun, readRun, sealInput } from '../src/index.ts'
 import { recordFiles } from '../src/writer.ts'
 import { header, event, observation, aggregate, snapshot } from './fixtures.ts'
 const dirs: string[] = []
@@ -54,4 +54,18 @@ it('validation rejects rows before append and existing runs cannot be overwritte
   expect(() => openRun(dir, header)).toThrow('overwrite')
   writer.close()
   expect(readRun(dir).events).toEqual([])
+})
+it('sealed writers carry the verified input seal hash and reject missing or mismatched seals', () => {
+  const dir = temp(), protocol = { label: 'fixture' }
+  const input = sealInput(dir, protocol, {
+    code: [], model_data: [], initial_state_hash: null, protocol_hash: fnv1a64(canonical(protocol)),
+    seeds: [1], external_inputs: [], scheduler_config_hash: null,
+    fixtures: [{ id: 'writer', label: 'fixture', note: 'Synthetic writer test' }],
+  })
+  expect(() => openRun(dir, { ...header, input_seal_hash: '0000000000000000' })).toThrow('hash mismatch')
+  expect(() => openRun(temp(), { ...header, input_seal_hash: input.hash })).toThrow('missing seal')
+  expect(() => openRun(temp(), { ...header, input_seal_hash: 'invalid' })).toThrow('input_seal_hash')
+  openRun(dir, header).close()
+  expect(readRun(dir).header).toEqual({ ...header, input_seal_hash: input.hash })
+  expect(header.input_seal_hash).toBeUndefined()
 })

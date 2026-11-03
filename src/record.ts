@@ -15,6 +15,8 @@ export interface Scope { kind: 'person' | 'household' | 'settlement' | 'polity' 
 /** Persisted in the manifest, independently of the event/observation writers. */
 export interface RecordingBoundary { t: number; status: 'stopped'; reason: string; readFailures: number; missingValues: number }
 export interface RunHeader {
+  /** Absent only on legacy, unsealed runs. */
+  input_seal_hash?: string
   run_id: string; target: string; seed: number
   engines: { id: string; package: string; version: string; commit: string }[]
   config_hash: string; init_bundle: string; boundary: BoundaryInput[]
@@ -75,6 +77,7 @@ export const validateBoundaryInput = (input: unknown): string[] => validate(inpu
 })
 export function validateRunHeader(input: unknown): string[] {
   const errors = validate(input, {
+    input_seal_hash: optional(hash),
     run_id: runId, target, seed: integer,
     engines: array(shape({ id: str, package: str, version: str, commit: str })), config_hash: hash, init_bundle: str,
     boundary: array(v => validateBoundaryInput(v).length === 0),

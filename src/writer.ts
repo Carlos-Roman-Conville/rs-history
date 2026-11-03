@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { canonical, fnv1a64 } from '@rex/kernel'
+import { readInputSeal } from './seal.ts'
 import { compareEvents, validateRunHeader, validateEventEntry, validateObservation, validateAggregate, validateSnapshotRef } from './record.ts'
 import type { RunHeader, EventEntry, Observation, Aggregate, SnapshotRef, RecordingBoundary } from './record.ts'
 
@@ -16,6 +17,11 @@ export function assertValid(value: unknown, validator: (v: unknown) => string[],
 export function openRun(dir: string, header: RunHeader): RunWriter {
   assertValid(header, validateRunHeader, 'header')
   const saved: RunHeader = JSON.parse(canonical(header))
+  if (existsSync(join(dir, 'input-seal.json'))) {
+    const seal = readInputSeal(dir)
+    if (saved.input_seal_hash !== undefined && saved.input_seal_hash !== seal.hash) throw new Error('input_seal_hash: hash mismatch')
+    saved.input_seal_hash = seal.hash
+  } else if (saved.input_seal_hash !== undefined) throw new Error('input-seal.json: missing seal')
   mkdirSync(dir, { recursive: true })
   for (const file of [...recordFiles, 'manifest.json']) if (existsSync(join(dir, file))) throw new Error(`refusing to overwrite ${file}`)
   for (const file of recordFiles) writeFileSync(join(dir, file), '', { flag: 'wx' })
