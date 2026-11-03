@@ -24,3 +24,4 @@ export const ENGINE = 'history'
 export function historyId(local: string): string {
   return qualify(ENGINE, local)
 }
+export * from './checks/step.ts'
