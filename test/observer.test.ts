@@ -38,6 +38,56 @@ function toy() {
 }
 const checkpoint = { period_ms: 10, first_ms: 10 }
 
+it('HI-1 required types retain whole payloads while unrequired event bytes stay unchanged', () => {
+  const run = toy(), rows = memory()
+  attachObserver({ ...run, ...rows, checkpoint, classes: { version: 1, map: [] }, required: ['total'] })
+  run.scheduler.runUntil(20)
+  for (const record of run.bus.state().records) {
+    const { payload, ...identity } = record.event
+    const expected = { ...identity, phase: record.phase, position: record.position, sequence: record.sequence, class: 'other',
+      ...(identity.type === 'total' ? { payload } : { payload_hash: fnv1a64(canonical(payload)) }) }
+    expect(canonical(rows.events.find(row => row.id === identity.id))).toBe(canonical(expected))
+  }
+})
+
+it('HI-1 copies causal ids from payload or envelope without inferring absent ids', () => {
+  const run = toy(), rows = memory()
+  run.bus.emit({ t: 0, source: 'fixture', type: 'ids', phase: 0, position: 0,
+    payload: { intention_id: 'intent', transaction_id: 'payload-tx', leg_id: 'leg' } })
+  const records = run.bus.recordsSince(0)
+  Object.assign(records[0].event, { transaction_id: 'envelope-tx' })
+  vi.spyOn(run.bus, 'recordsSince').mockReturnValue(records)
+  attachObserver({ ...run, ...rows, checkpoint, classes })
+  expect(rows.events[0]).toMatchObject({ intention_id: 'intent', transaction_id: 'envelope-tx', leg_id: 'leg' })
+  expect(rows.events[0].payload_hash).toBeDefined()
+  expect(rows.events[0].cause).toBeUndefined()
+})
+
+it('V19 observer declares no RNG stream and preserves kernel stream positions', () => {
+  const plain = toy(), recorded = toy(), rows = memory()
+  const register = vi.spyOn(recorded.scheduler, 'register')
+  attachObserver({ ...recorded, ...rows, checkpoint, classes, required: ['total'] })
+  expect(register.mock.calls[0][0].mechanisms).toEqual([])
+  for (let t = 0; t <= 100; t += 10) {
+    plain.scheduler.runUntil(t); recorded.scheduler.runUntil(t)
+    expect(recorded.random.state()).toEqual(plain.random.state())
+  }
+})
+
+it('HI-1 stop boundary survives a failed event writer and round-trips through the manifest', () => {
+  const dir = mkdtempSync(join(resolve('.'), '.observer-test-'))
+  try {
+    const run = toy(), writer = openRun(dir, header)
+    const status = attachObserver({ ...run, writer: { ...writer, event() { throw new Error('event write failed') } }, checkpoint, classes })
+    run.scheduler.runUntil(30)
+    writer.close()
+    expect(status.stopped).toBe(true)
+    expect(readRun(dir).header.recording_boundaries).toEqual([
+      { t: 10, status: 'stopped', reason: 'event write failed', readFailures: 0, missingValues: 0 },
+    ])
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
+
 it('V1 G-inert preserves draws, events, RNG state and engine hashes at all 100 checkpoints', () => {
   const plain = toy(), recorded = toy(), rows = memory()
   const register = vi.spyOn(recorded.scheduler, 'register')

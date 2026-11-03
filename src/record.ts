@@ -12,6 +12,8 @@ export interface BoundaryInput {
   label: DataLabel; source: string; note?: string
 }
 export interface Scope { kind: 'person' | 'household' | 'settlement' | 'polity' | 'region' | 'world'; id: string }
+/** Persisted in the manifest, independently of the event/observation writers. */
+export interface RecordingBoundary { t: number; status: 'stopped'; reason: string; readFailures: number; missingValues: number }
 export interface RunHeader {
   run_id: string; target: string; seed: number
   engines: { id: string; package: string; version: string; commit: string }[]
@@ -20,9 +22,11 @@ export interface RunHeader {
   checkpoints: { period_ms: number; first_ms: number }
   resolution_plan: { entity: string; mode: Mode; from_t: number }[]
   reportable: boolean; non_reportable_reason?: string
+  recording_boundaries?: RecordingBoundary[]
 }
 export type EventEntry = {
   id: string; t: number; source: string; type: string; cause?: string
+  intention_id?: string; transaction_id?: string; leg_id?: string
   phase: number; position: number; sequence: number; class: EventClass
 } & ({ payload: unknown; payload_hash?: never } | { payload?: never; payload_hash: string })
 export interface Observation { t: number; quantity: string; unit: string; scope: Scope; value: Value; mode: Mode; port: string }
@@ -78,6 +82,7 @@ export function validateRunHeader(input: unknown): string[] {
     checkpoints: shape({ period_ms: v => natural(v) && v !== 0, first_ms: natural }),
     resolution_plan: array(shape({ entity: str, mode, from_t: natural })),
     reportable: v => typeof v === 'boolean', non_reportable_reason: optional(str),
+    recording_boundaries: optional(array(shape({ t: natural, status: choice(['stopped']), reason: str, readFailures: natural, missingValues: natural }))),
   })
   if (object(input)) {
     if (target(input.target) && integer(input.seed) && hash(input.config_hash) && input.run_id !== `${input.target}/${input.seed}/${input.config_hash}`) errors.push('run_id: must match target/seed/config_hash')
@@ -86,7 +91,7 @@ export function validateRunHeader(input: unknown): string[] {
   return errors.sort()
 }
 export function validateEventEntry(input: unknown): string[] {
-  const errors = validate(input, { id: str, t: natural, source: str, type: str, cause: optional(str), phase: natural, position: natural, sequence: natural, class: choice(eventClasses), payload: optional(json), payload_hash: optional(hash) })
+  const errors = validate(input, { id: str, t: natural, source: str, type: str, cause: optional(str), intention_id: optional(str), transaction_id: optional(str), leg_id: optional(str), phase: natural, position: natural, sequence: natural, class: choice(eventClasses), payload: optional(json), payload_hash: optional(hash) })
   if (object(input) && (input.payload !== undefined) === (input.payload_hash !== undefined)) errors.push('payload: require exactly one of payload or payload_hash')
   return errors.sort()
 }

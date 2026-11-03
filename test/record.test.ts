@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { validateBoundaryInput, validateRunHeader, validateEventEntry, validateObservation, validateAggregate, validateSnapshotRef, validateScore } from '../src/record.ts'
 import { header, event, observation, aggregate, snapshot, score, ensemble } from './fixtures.ts'
 
+it('HI-1 causal ids are optional explicit nonempty strings', () => {
+  expect(validateEventEntry(event)).toEqual([])
+  for (const key of ['intention_id', 'transaction_id', 'leg_id']) {
+    expect(validateEventEntry({ ...event, [key]: 'fixture/id' })).toEqual([])
+    for (const value of [null, 1, '', false]) expect(validateEventEntry({ ...event, [key]: value })).toContain(`${key}: invalid value`)
+  }
+})
+
 const cases = [
   ['BoundaryInput', { ...header.boundary[0], note: 'documented input' }, validateBoundaryInput],
   ['RunHeader', header, validateRunHeader], ['EventEntry', event, validateEventEntry],

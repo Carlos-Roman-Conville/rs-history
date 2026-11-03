@@ -16,6 +16,8 @@ export interface ObserverOptions {
   checkpoint: { period_ms: number; first_ms: number }
   reads: readonly ObserverRead[]
   classes: EventClassTable
+  /** Protocol-declared event types whose complete payloads must be retained. */
+  required?: readonly string[]
   /** Host supplies snapshot hashes; the observer supplies the checkpoint time. */
   snapshot?: (t: number) => Omit<SnapshotRef, 't'>
 }
@@ -30,7 +32,8 @@ export interface ObserverStatus {
  * INITIAL (initial) observations are read at attach time before scheduled checkpoints.
  * An omitted resolution mode means fine; counters include all attempted reads.
  */
-export function attachObserver({ scheduler, bus, writer, checkpoint, reads, classes, snapshot }: ObserverOptions): ObserverStatus {
+export function attachObserver({ scheduler, bus, writer, checkpoint, reads, classes, snapshot, required = [] }: ObserverOptions): ObserverStatus {
+  const requiredSet = new Set(required)
   let cursor = 0
   let stopped = false
   let readFailures = 0
@@ -42,9 +45,16 @@ export function attachObserver({ scheduler, bus, writer, checkpoint, reads, clas
       const records = bus.recordsSince(cursor).filter(record => record.event.t <= t)
       for (const { event, phase, position, sequence } of records) {
         const { payload, ...identity } = event
-        const mapped = classes.map.some(row => row.source === event.source && row.type === event.type)
+        const mapped = requiredSet.has(event.type) || classes.map.some(row => row.source === event.source && row.type === event.type)
+        // Explicit envelope ids take precedence over payload ids; never derive ids.
+        const ids: Partial<Record<'intention_id' | 'transaction_id' | 'leg_id', string>> = {}
+        for (const key of ['intention_id', 'transaction_id', 'leg_id'] as const) {
+          const envelope = event as unknown as Record<string, unknown>
+          const value = envelope[key] ?? (payload !== null && typeof payload === 'object' ? (payload as Record<string, unknown>)[key] : undefined)
+          if (typeof value === 'string') ids[key] = value
+        }
         writer.event({
-          ...identity, phase, position, sequence,
+          ...identity, ...ids, phase, position, sequence,
           class: classify(event.source, event.type, classes),
           ...(mapped ? { payload } : { payload_hash: fnv1a64(canonical(payload)) }),
         })
@@ -64,7 +74,8 @@ export function attachObserver({ scheduler, bus, writer, checkpoint, reads, clas
     } catch (error) {
       stopped = true
       // Even a broken failure reporter must not escape into the scheduler.
-      try { writer.fail(error instanceof Error ? error.message : String(error)) } catch { /* stopped */ }
+      const reason = (error instanceof Error ? error.message : String(error)) || 'History recording failed'
+      try { writer.fail(reason, { t, status: 'stopped', reason, readFailures, missingValues }) } catch { /* stopped */ }
     }
   }
   function recordInitial(marker: typeof INITIAL) {

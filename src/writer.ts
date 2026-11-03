@@ -2,12 +2,12 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join } from 'node:path'
 import { canonical, fnv1a64 } from '@rex/kernel'
 import { compareEvents, validateRunHeader, validateEventEntry, validateObservation, validateAggregate, validateSnapshotRef } from './record.ts'
-import type { RunHeader, EventEntry, Observation, Aggregate, SnapshotRef } from './record.ts'
+import type { RunHeader, EventEntry, Observation, Aggregate, SnapshotRef, RecordingBoundary } from './record.ts'
 
 export const recordFiles = ['events.jsonl', 'series.jsonl', 'aggregates.jsonl', 'snapshots.jsonl'] as const
 export interface RunWriter {
   event(e: EventEntry): void; observe(o: Observation): void; aggregate(a: Aggregate): void
-  snapshot(s: SnapshotRef): void; fail(reason: string): void; close(): void
+  snapshot(s: SnapshotRef): void; fail(reason: string, boundary?: RecordingBoundary): void; close(): void
 }
 export function assertValid(value: unknown, validator: (v: unknown) => string[], name: string): void {
   const errors = validator(value)
@@ -21,9 +21,10 @@ export function openRun(dir: string, header: RunHeader): RunWriter {
   for (const file of recordFiles) writeFileSync(join(dir, file), '', { flag: 'wx' })
   let closed = false
   let last: EventEntry | undefined
-  const fail = (reason: string): void => {
+  const fail = (reason: string, boundary?: RecordingBoundary): void => {
     saved.reportable = false
     saved.non_reportable_reason = typeof reason === 'string' && reason.trim() ? reason : 'History recording failed'
+    if (boundary) (saved.recording_boundaries ??= []).push({ ...boundary })
   }
   function append(file: typeof recordFiles[number], row: unknown, validator: (v: unknown) => string[]): void {
     if (closed) throw new Error('run is closed')
