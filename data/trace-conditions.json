@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "measurement_level": 4,
+  "source": "PLAN.md §3.6 (Rex, 2026-11-02)",
+  "validity": "Recorded contributing conditions, not causal proof; necessity requires a counterfactual arm. No empirical validation yet.",
+  "rows": [
+    { "id": "no_food_perceived_in_reach", "rule": { "type": "cognition.perception", "all": [{ "field": "food_in_reach", "op": "eq", "value": false }] } },
+    { "id": "failed_attempt", "rule": { "type": "shared.action.outcome", "all": [{ "field": "status", "op": "eq", "value": "failed" }, { "field": "reason", "op": "nonempty" }] } },
+    { "id": "eat_evaluated_not_selected", "rule": { "type": "cognition.decision", "all": [{ "field": "alternatives", "op": "contains", "value": "eat" }, { "field": "selected", "op": "neq", "value": "eat" }] } },
+    { "id": "intake_below_expenditure", "rule": { "type": "life.energy", "all": [{ "field": "intake_J", "op": "lt_field", "other": "expenditure_J" }] } },
+    { "id": "other_crisis_cause", "rule": { "type": "realism.crisis", "all": [{ "field": "cause", "op": "nonempty" }, { "field": "cause", "op": "neq", "value": "starvation" }] } }
+  ]
+}
