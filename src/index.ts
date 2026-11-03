@@ -2,6 +2,8 @@
 import { qualify } from '@rex/kernel'
 export * from './record.ts'
 export * from './seal.ts'
+export * from './protocol.ts'
+export * from './verdict.ts'
 export { openRun, type RunWriter } from './writer.ts'
 export { readRun, type RunRecord } from './reader.ts'
 export * from './classes.ts'
