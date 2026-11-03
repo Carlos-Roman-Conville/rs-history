@@ -1,3 +1,4 @@
+import type { EnsembleFindings } from './ensemble.ts'
 import { canonical } from '@rex/kernel'
 
 export const eventClasses = ['demographic', 'economic', 'land', 'technology', 'institution', 'conflict', 'succession', 'migration', 'culture', 'other'] as const
@@ -37,7 +38,7 @@ export interface SnapshotRef { t: number; kernel_hash: string; participants: Rec
 interface ScoreBase { target: string; indicator: string; run_id: string; checkpoint: number | 'all'; S: number | null; signed_error: number | null; n_points: number; data_label: DataLabel }
 export type Score = ScoreBase & {
   mean_S?: number | null; sd_S?: number | null; bias?: number | null; variance?: number | null
-  sign_consistency?: number | null; verdict?: 'systematic' | 'stochastic' | 'insufficient'
+  sign_consistency?: number | null; ensemble?: EnsembleFindings
 }
 
 type Check = (value: unknown) => boolean
@@ -101,9 +102,23 @@ export function validateEventEntry(input: unknown): string[] {
 export const validateObservation = (input: unknown): string[] => validate(input, { t: natural, quantity: str, unit: str, scope, value, mode, port: str })
 export const validateAggregate = (input: unknown): string[] => validate(input, { t: natural, measure: str, scope, value, unit: str, fn: v => typeof v === 'string' && /^(sum|count|max|share|classify@[^\s]+)$/.test(v), inputs: array(str) })
 export const validateSnapshotRef = (input: unknown): string[] => validate(input, { t: natural, kernel_hash: hash, participants: v => object(v) && Object.entries(v).every(([id, h]) => str(id) && hash(h)) })
+const nonnegative: Check = v => finite(v) && (v as number) >= 0
+const boolean: Check = v => typeof v === 'boolean'
+const status = choice(['met', 'not_met', 'insufficient'])
+const sidedness = choice(['one', 'two'])
+const ensembleFindings = shape({
+  criterion: nullable(shape({ abs: nonnegative, rel: nonnegative, scale: nonnegative, source: str })),
+  method: nullable(shape({ name: choice(['sign_test']), sidedness })),
+  n_checkpoints: natural, repetitions_per_checkpoint: array(natural), status, missing: array(str),
+  checkpoints: array(shape({ checkpoint: natural, n_runs: natural, mean_discrepancy: nullable(finite),
+    variance: nullable(nonnegative), mse: nullable(nonnegative), criterion_met: nullable(boolean), status, missing: array(str),
+    uncertainty: nullable(shape({ method: choice(['sign_test']), sidedness, n: natural, k: natural,
+      p: v => nonnegative(v) && (v as number) <= 1 })),
+  })),
+})
 export function validateScore(input: unknown): string[] {
   const ensemble = object(input) && input.run_id === 'ensemble'
-  const extra: Fields = { mean_S: nullable(v => finite(v) && (v as number) >= 0 && (v as number) <= 1), sd_S: nullable(v => finite(v) && (v as number) >= 0), bias: nullable(finite), variance: nullable(v => finite(v) && (v as number) >= 0), sign_consistency: nullable(natural), verdict: choice(['systematic', 'stochastic', 'insufficient']) }
+  const extra: Fields = { mean_S: nullable(v => finite(v) && (v as number) >= 0 && (v as number) <= 1), sd_S: nullable(v => finite(v) && (v as number) >= 0), bias: nullable(finite), variance: nullable(v => finite(v) && (v as number) >= 0), sign_consistency: nullable(natural), ensemble: ensembleFindings }
   return validate(input, { target, indicator: str, run_id: v => v === 'ensemble' || runId(v), checkpoint: v => v === 'all' || natural(v), S: nullable(v => finite(v) && (v as number) >= 0 && (v as number) <= 1), signed_error: nullable(finite), n_points: natural, data_label: label, ...(ensemble ? extra : {}) })
 }
 

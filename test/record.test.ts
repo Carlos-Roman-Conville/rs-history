@@ -54,8 +54,8 @@ it('header identity matches its components and dirty engines cannot be reportabl
   expect(validateRunHeader({ ...header, reportable: false, non_reportable_reason: 'failed' })).toEqual([])
   expect(validateRunHeader({ ...header, non_reportable_reason: 1 }).length).toBeGreaterThan(0)
 })
-it('ensemble scores require every ensemble statistic and verdict', () => {
-  for (const key of ['mean_S', 'sd_S', 'bias', 'variance', 'sign_consistency', 'verdict']) {
+it('ensemble scores require every ensemble statistic and findings', () => {
+  for (const key of ['mean_S', 'sd_S', 'bias', 'variance', 'sign_consistency', 'ensemble']) {
     const row = { ...ensemble } as Record<string, unknown>
     delete row[key]
     expect(validateScore(row).length).toBeGreaterThan(0)
@@ -81,4 +81,15 @@ it('BoundaryInput accepts both schedule forms and rejects invalid schedule field
     expect(validateBoundaryInput(missing)).toContain(`${key}: invalid value`)
     expect(validateRunHeader({ ...header, boundary: [missing] })).toContain('boundary: invalid value')
   }
+})
+
+it('HIST-20 ensemble findings validate nested uncertainty and criterion fields', () => {
+  const report = ensemble.ensemble!
+  const point = report.checkpoints[0]
+  for (const bad of [
+    { ...report, criterion: { abs: -1, rel: 0, scale: 1, source: 'fixture' } },
+    { ...report, method: { name: 'sign_test', sidedness: 'unknown' } },
+    { ...report, checkpoints: [{ ...point, uncertainty: { method: 'sign_test', sidedness: 'one', n: 10, k: 9, p: 2 } }] },
+    { ...report, checkpoints: [{ ...point, criterion_met: 'yes' }] },
+  ]) expect(validateScore({ ...ensemble, ensemble: bad })).toContain('ensemble: invalid value')
 })
