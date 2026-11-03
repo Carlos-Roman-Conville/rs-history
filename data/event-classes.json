@@ -1,1 +1,11 @@
-{"map":[],"version":1}
+{
+  "version": 1,
+  "map": [
+    { "source": "kernel.harness.resolver", "type": "shared.action.outcome", "class": "economic" },
+    { "source": "cognition", "type": "cognition.decision", "class": "other" },
+    { "source": "cognition", "type": "cognition.intention", "class": "other" },
+    { "source": "life", "type": "body.crisis", "class": "other" },
+    { "source": "life", "type": "body.death", "class": "other" },
+    { "source": "kernel", "type": "kernel.transfer", "class": "economic" }
+  ]
+}

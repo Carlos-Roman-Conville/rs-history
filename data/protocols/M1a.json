@@ -1,0 +1,230 @@
+{
+  "milestone": "M1a",
+  "scenario": "labelled test-fixture household",
+  "self_feeding": true,
+  "arms": [
+    {
+      "id": "provisioned",
+      "owner": "Life",
+      "configuration": {
+        "label": "fixture",
+        "init_bundle": "fixtures/m1a-household",
+        "epoch": 1270,
+        "food": "fixture/cereal-bread",
+        "food_in_reach": true
+      }
+    },
+    {
+      "id": "deprived",
+      "owner": "Life",
+      "configuration": {
+        "label": "fixture",
+        "init_bundle": "fixtures/m1a-household",
+        "epoch": 1270,
+        "food": "fixture/cereal-bread",
+        "food_in_reach": false
+      }
+    },
+    {
+      "id": "control-matched",
+      "owner": "cognition",
+      "configuration": {
+        "label": "fixture",
+        "arm": "matched_current_state_control",
+        "learning": true
+      }
+    },
+    {
+      "id": "learning-disabled",
+      "owner": "cognition",
+      "configuration": {
+        "label": "fixture",
+        "arm": "no_learning",
+        "learning": false
+      }
+    },
+    {
+      "id": "competing-cause",
+      "owner": "cognition",
+      "configuration": {
+        "label": "fixture",
+        "arm": "competing_cause",
+        "learning": true
+      }
+    }
+  ],
+  "differences": ["food_in_reach"],
+  "seeds": [
+    2817550998,
+    2800773379,
+    2783995760,
+    2901439093,
+    2884661474,
+    2867883855,
+    2851106236,
+    2968549569,
+    2951771950,
+    91743058
+  ],
+  "streams": [
+    {
+      "id": "choice/person",
+      "mechanism": "choice",
+      "person_class": "person",
+      "coupling": "coupled",
+      "note": "Cognition decision RNG keyed by person id and stream id (Catalogue PLAN.md §8 stage B fixture household)"
+    },
+    {
+      "id": "physiology/person",
+      "mechanism": "physiology",
+      "person_class": "person",
+      "coupling": "coupled",
+      "note": "Life stochastic draws for the represented body; common random numbers across paired arms"
+    },
+    {
+      "id": "detectability/person",
+      "mechanism": "detectability",
+      "person_class": "person",
+      "coupling": "not_feasible",
+      "note": "Perception stub (M1a-09); paired variance reduction not claimed until Life/Reality ports land"
+    }
+  ],
+  "steps": [
+    {
+      "owner": "Life",
+      "reference_ms": 60000,
+      "second_ms": 600000
+    }
+  ],
+  "checks": [
+    {
+      "id": "E1",
+      "owner": "Kernel",
+      "needs_types": ["cognition.intention", "shared.action.outcome"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E2",
+      "owner": "Kernel",
+      "needs_types": ["kernel.transfer"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E3",
+      "owner": "Kernel",
+      "needs_types": ["kernel.transfer", "shared.action.outcome"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E4",
+      "owner": "Kernel",
+      "needs_types": ["shared.action.outcome", "body.crisis", "body.death"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E5",
+      "owner": "History",
+      "needs_types": ["kernel.transfer"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E6",
+      "owner": "Economy",
+      "needs_types": ["shared.action.outcome", "cognition.intention"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E7",
+      "owner": "Cognition",
+      "needs_types": ["cognition.decision", "cognition.intention", "body.death"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E8",
+      "owner": "Cognition",
+      "needs_types": ["shared.action.outcome"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "E9",
+      "owner": "Society",
+      "needs_types": ["shared.action.outcome"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "accounting",
+      "owner": "Kernel",
+      "needs_types": ["kernel.transfer"],
+      "tolerance": {
+        "abs": 0,
+        "rel": 1e-9,
+        "scale": "max_open_close_volume",
+        "source": "Economy PLAN.md §7 (analytical 1e-9 relative); Life PLAN.md §7 once-only balances; INTEGRATION-PLAN IT-M1a-3"
+      },
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "trace",
+      "owner": "History",
+      "needs_types": [
+        "body.death",
+        "body.crisis",
+        "cognition.intention",
+        "shared.action.outcome",
+        "cognition.decision"
+      ],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "step",
+      "owner": "Life",
+      "needs_types": ["kernel.transfer"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": null
+    },
+    {
+      "id": "learning",
+      "owner": "Cognition",
+      "needs_types": ["cognition.decision", "shared.action.outcome"],
+      "tolerance": null,
+      "margin": null,
+      "sidedness": "one"
+    }
+  ],
+  "required_event_types": [
+    "shared.action.outcome",
+    "cognition.decision",
+    "body.crisis",
+    "body.death",
+    "cognition.intention",
+    "kernel.transfer"
+  ],
+  "samples": [
+    { "measure": "body.hunger_signal", "every_ms": 10000 },
+    { "measure": "body.satiety_signal", "every_ms": 10000 },
+    { "measure": "economy.inventory", "every_ms": 86400000 },
+    { "measure": "life.energy", "every_ms": 60000 }
+  ]
+}
