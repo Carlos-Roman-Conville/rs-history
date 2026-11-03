@@ -2,6 +2,7 @@
   "label": "fixture",
   "case": "vacancy-long-enough",
   "defect": "event-supported vacancy at least t_vacancy_ms",
+  "note": "HIST-20: labelled zero checkpoint at departure supplies the first of two zero samples spanning the vacancy duration.",
   "expected": "pass",
   "protocol": {
     "milestone": "M1a",
@@ -156,6 +157,18 @@
         "id": "settlement/fixture"
       },
       "value": 1,
+      "mode": "fine",
+      "port": "residents"
+    },
+    {
+      "t": 1000,
+      "quantity": "settlement.residents",
+      "unit": "1",
+      "scope": {
+        "kind": "settlement",
+        "id": "settlement/fixture"
+      },
+      "value": 0,
       "mode": "fine",
       "port": "residents"
     },

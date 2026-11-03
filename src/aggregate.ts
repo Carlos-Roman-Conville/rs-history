@@ -5,7 +5,13 @@ export type MembersOf = (scope: Scope, t: number) => readonly Scope[] | null | u
 export type AggregateOptions = {
   measure: string; targets: readonly Scope[]; membersOf: MembersOf
 } & ({ fn: 'sum' | 'count' | 'max'; quantity: string } | { fn: 'share'; quantity: readonly [part: string, whole: string] })
-export interface ResolutionSwitch { entity: string; from_t: number }
+export interface ResolutionSwitch {
+  entity: string; from_t: number
+  /** In the selected measure's units; measure is required when series has multiple measures. */
+  same_instant?: { coarse: number; fine: number }
+  measure?: string
+}
+export interface ContinuityFlow { t: number; measure: string; scope: Scope; value: number; unit: string }
 
 export const observationId = (o: Observation): string => `${o.t}/${o.quantity}/${o.scope.kind}/${o.scope.id}`
 const scopeKey = (s: Scope): string => `${s.kind}/${s.id}`
@@ -101,28 +107,51 @@ export function sumIdentity(aggregates: readonly Aggregate[], run: RecordInput):
   return failures.sort()
 }
 
-/** V6 compares t < from_t with t >= from_t, separately by measure and scope.
- * Missing endpoints/null values are failures: continuity cannot be established.
- * Tolerance is an absolute difference in the series' units.
+/** V6/V22: same-instant representation comparison, otherwise interval reconciliation.
+ * Non-null flows assert complete coverage for the supplied series; [] means known
+ * no flows, null means unavailable. Values and absolute owner tolerance share units.
+ * Outputs are lexically sorted. A missing tolerance or evidence is insufficient.
  */
-export function continuity(series: readonly Aggregate[], switches: readonly ResolutionSwitch[], tolerance: number): string[] {
-  if (!Number.isFinite(tolerance) || tolerance < 0) throw new Error('tolerance must be finite and non-negative')
-  const failures: string[] = []
+export function continuity(series: readonly Aggregate[], switches: readonly ResolutionSwitch[], tolerance: number | null,
+  flows: readonly ContinuityFlow[] | null = null): { failures: string[]; insufficient: string[] } {
+  if (tolerance !== null && (!Number.isFinite(tolerance) || tolerance < 0)) throw new Error('tolerance must be finite and non-negative')
+  const failures: string[] = [], insufficient: string[] = []
   for (const change of switches) {
+    const label = `V6 ${change.from_t}/${change.entity}`
+    if (!Number.isFinite(change.from_t)) throw new Error('switch time must be finite')
+    if (tolerance === null) { insufficient.push(`${label}: missing owner tolerance`); continue }
     const groups = new Map<string, Aggregate[]>()
-    for (const row of series) if (row.scope.id === change.entity) {
+    for (const row of series) if (row.scope.id === change.entity && (change.measure === undefined || row.measure === change.measure)) {
       const key = `${row.measure}/${scopeKey(row.scope)}`
       groups.set(key, [...(groups.get(key) ?? []), row])
     }
-    if (!groups.size) failures.push(`V6 ${change.from_t}/${change.entity}: missing series`)
+    if (change.same_instant) {
+      if (groups.size > 1) { insufficient.push(`${label}: ambiguous same-instant measure/scope`); continue }
+      const { coarse, fine } = change.same_instant
+      if (!Number.isFinite(coarse) || !Number.isFinite(fine)) { insufficient.push(`${label}: missing numeric pair`); continue }
+      const jump = Math.abs(fine - coarse)
+      if (jump > tolerance) failures.push(`${label}: jump ${jump} exceeds ${tolerance}`)
+      continue
+    }
+    if (!groups.size) insufficient.push(`${label}: missing series`)
     for (const [key, rows] of groups) {
       rows.sort((a, b) => a.t - b.t)
       const before = rows.filter(a => a.t < change.from_t).at(-1)
       const after = rows.find(a => a.t >= change.from_t)
       const label = `V6 ${change.from_t}/${key}`
-      if (typeof before?.value !== 'number' || typeof after?.value !== 'number') failures.push(`${label}: missing numeric endpoints`)
-      else if (Math.abs(after.value - before.value) > tolerance) failures.push(`${label}: jump ${Math.abs(after.value - before.value)} exceeds ${tolerance}`)
+      if (typeof before?.value !== 'number' || typeof after?.value !== 'number'
+        || !Number.isFinite(before.value) || !Number.isFinite(after.value)) {
+        insufficient.push(`${label}: missing numeric endpoints`); continue
+      }
+      if (flows === null) { insufficient.push(`${label}: missing recorded flows`); continue }
+      const selected = flows.filter(f => f.measure === before.measure && scopeKey(f.scope) === scopeKey(before.scope)
+        && f.t >= before.t && f.t < after.t)
+      if (before.unit !== after.unit || selected.some(f => f.unit !== before.unit || !Number.isFinite(f.value))) {
+        insufficient.push(`${label}: incompatible units or non-numeric flows`); continue
+      }
+      const jump = Math.abs(after.value - before.value - selected.reduce((sum, f) => sum + f.value, 0))
+      if (jump > tolerance) failures.push(`${label}: jump ${jump} exceeds ${tolerance}`)
     }
   }
-  return failures.sort()
+  return { failures: failures.sort(), insufficient: insufficient.sort() }
 }

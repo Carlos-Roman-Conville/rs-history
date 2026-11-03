@@ -84,14 +84,14 @@ it('V5 requires exact integer sums and permits the specified floating tolerance'
   expect(sumIdentity([{ ...sum(series)[0], value: 0.30001 }], { series })).toHaveLength(1)
 })
 
-it('V6 compares the nearest points around the switch using absolute owner tolerance', () => {
+it('HIST-20 V6 reconciles nearest points with known empty flows using owner tolerance', () => {
   const series = [row(p, 2), row(q, 3), row(village, 5.25, 10, 'coarse'), row(village, 99, 20, 'coarse')]
   const values = sum(series).reverse()
   const switches = [{ entity: village.id, from_t: 10 }]
-  expect(continuity(values, switches, 0.25)).toEqual([])
-  expect(continuity(values, switches, 0.2)[0]).toContain('jump 0.25 exceeds 0.2')
-  expect(continuity(values, [{ entity: village.id, from_t: 0 }], 1)[0]).toContain('missing numeric endpoints')
-  expect(continuity(values.map(a => ({ ...a, value: null })), switches, 1)).toHaveLength(1)
+  expect(continuity(values, switches, 0.25, [])).toEqual({ failures: [], insufficient: [] })
+  expect(continuity(values, switches, 0.2, []).failures[0]).toContain('jump 0.25 exceeds 0.2')
+  expect(continuity(values, [{ entity: village.id, from_t: 0 }], 1).insufficient[0]).toContain('missing numeric endpoints')
+  expect(continuity(values.map(a => ({ ...a, value: null })), switches, 1).insufficient).toHaveLength(1)
   expect(() => continuity(values, switches, -1)).toThrow('tolerance')
 })
 
@@ -100,10 +100,40 @@ it('rejects ambiguous observation IDs and cyclic membership', () => {
   expect(() => aggregateSeries({ series: [row(p, 1)] }, { measure: 'food', quantity: 'food', fn: 'sum', targets: [village], membersOf: () => [village] })).toThrow('cyclic')
 })
 
-it('V6 keeps measures separate and sorts failures', () => {
+it('HIST-20 V6 keeps measures separate and sorts insufficient evidence', () => {
   const a = sum([row(p, 2), row(q, 3)])[0]
   const series: Aggregate[] = [{ ...a, measure: 'z' }, { ...a, measure: 'a' }]
-  const failures = continuity(series, [{ entity: village.id, from_t: 10 }], 0)
+  const failures = continuity(series, [{ entity: village.id, from_t: 10 }], 0).insufficient
   expect(failures).toHaveLength(2)
   expect(failures).toEqual([...failures].sort())
 })
+import { readFileSync, readdirSync } from 'node:fs'
+
+it('HIST-20 V22 uses half-open flow intervals and requires evidence and owner tolerance', () => {
+  const values = sum([row(village, 8, 0, 'coarse'), row(village, 10, 10, 'coarse')])
+  const switches = [{ entity: village.id, from_t: 5 }]
+  const flow = { t: 0, measure: 'food', scope: village, value: 2, unit: 'kg' }
+  expect(continuity(values, switches, 0, [flow, { ...flow, t: 10, value: 99 }])).toEqual({ failures: [], insufficient: [] })
+  expect(continuity(values, switches, 0).insufficient).toHaveLength(1)
+  expect(continuity(values, switches, null, []).insufficient).toHaveLength(1)
+  expect(continuity(values, switches, 0, [{ ...flow, unit: 'J' }]).insufficient).toHaveLength(1)
+  expect(continuity(values, switches, 0, []).failures).toHaveLength(1)
+  expect(continuity([], [{ ...switches[0], same_instant: { coarse: 10, fine: 10.25 } }], 0.25)).toEqual({ failures: [], insufficient: [] })
+  expect(continuity([], [{ ...switches[0], same_instant: { coarse: 10, fine: 10.25 } }], 0.2).failures).toHaveLength(1)
+})
+
+for (const file of readdirSync(new URL('./fixtures/synthetic/continuity/', import.meta.url)).filter(f => f.endsWith('.json')).sort()) {
+  it(`V22 continuity fixture ${file} gives its expected result`, () => {
+    const fixture = JSON.parse(readFileSync(new URL(`./fixtures/synthetic/continuity/${file}`, import.meta.url), 'utf8'))
+    const observations = fixture.observations as Observation[]
+    const first = observations[0], last = observations[1]
+    const series: Aggregate[] = observations.map(o => ({ t: o.t, measure: o.quantity, scope: o.scope, value: o.value as number,
+      unit: o.unit, fn: 'sum', inputs: [] }))
+    // Fixture headers use placeholder entities/times; observed quantity/scope identify this check.
+    const same_instant = first.t === last.t ? { coarse: first.value as number, fine: last.value as number } : undefined
+    const flows = fixture.events.length ? fixture.events.map((e: { t: number; payload: { amount: number; unit: string } }) =>
+      ({ t: e.t, measure: first.quantity, scope: first.scope, value: e.payload.amount, unit: e.payload.unit })) : null
+    const result = continuity(series, [{ entity: first.scope.id, from_t: last.t, same_instant }], 0, flows) // labelled exact fixture tolerance
+    expect(result.failures.length ? 'fail' : result.insufficient.length ? 'insufficient' : 'pass').toBe(fixture.expected)
+  })
+}

@@ -112,7 +112,7 @@ it('invalid numeric inputs and ambiguous reference labels are rejected', () => {
 })
 
 it('ensemble findings use signed evidence independently of the display score', () => {
-  const row = ensembleScore('H1', 'I1', [{ S: null, signed: [2], n_points: 1, data_label: 'fiction' }], { criterion, method })
+  const row = ensembleScore('H1', 'I1', [{ S: null, signed: [2], n_points: 1, raw: [], conventions: [], data_label: 'fiction' }], { criterion, method })
   expect(row.ensemble?.status).toBe('not_met')
   expect(row.S).toBeNull()
   expect(validateScore(row)).toEqual([])
