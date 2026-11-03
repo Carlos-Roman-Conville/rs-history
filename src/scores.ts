@@ -52,8 +52,9 @@ export function scoreAdoption(sim: number | null, hist: number | null): Indicato
   return result(1 - Math.min(1, Math.abs(sim - hist) / 50), 1, [sim - hist])
 }
 
-/** Globally closest available pair first; ties: historical date, simulated date,
- * label, then original indices. Known empty lists agree; null means unavailable.
+/** Maximum-cardinality same-label matching within a fixed symmetric window.
+ * Sorted two-pointer sweeps do not guarantee minimum total date error.
+ * Known empty lists agree; null means unavailable.
  * n_points counts historical events, or simulated events when history is empty.
  */
 export function scoreEvents(sim: readonly DatedEvent[] | null, hist: readonly DatedEvent[] | null, window = 25): IndicatorScore {
@@ -61,13 +62,28 @@ export function scoreEvents(sim: readonly DatedEvent[] | null, hist: readonly Da
   if (window < 0) throw new Error('window must be non-negative')
   if (sim === null || hist === null) return missing()
   for (const e of [...sim, ...hist]) { finite(e.date); if (!e.label.trim()) throw new Error('event label required') }
-  const pairs = sim.flatMap((a, i) => hist.flatMap((b, j) => a.label === b.label && Math.abs(a.date - b.date) <= window
-    ? [{ i, j, distance: Math.abs(a.date - b.date) }] : []))
-  pairs.sort((a, b) => a.distance - b.distance || hist[a.j].date - hist[b.j].date || sim[a.i].date - sim[b.i].date ||
-    (hist[a.j].label < hist[b.j].label ? -1 : hist[a.j].label > hist[b.j].label ? 1 : 0) || a.j - b.j || a.i - b.i)
-  const usedSim = new Set<number>(), usedHist = new Set<number>()
-  for (const p of pairs) if (!usedSim.has(p.i) && !usedHist.has(p.j)) { usedSim.add(p.i); usedHist.add(p.j) }
-  return result(sim.length + hist.length ? 2 * usedSim.size / (sim.length + hist.length) : 1, hist.length || sim.length)
+  const byLabel = (events: readonly DatedEvent[]) => {
+    const groups = new Map<string, number[]>()
+    for (const e of events) {
+      const dates = groups.get(e.label) ?? []
+      dates.push(e.date)
+      groups.set(e.label, dates)
+    }
+    for (const dates of groups.values()) dates.sort((a, b) => a - b)
+    return groups
+  }
+  const simulated = byLabel(sim), historical = byLabel(hist)
+  let matches = 0
+  for (const label of [...simulated.keys()].sort()) {
+    const a = simulated.get(label)!, b = historical.get(label) ?? []
+    let i = 0, j = 0
+    while (i < a.length && j < b.length) {
+      if (Math.abs(a[i] - b[j]) <= window) { matches++; i++; j++ }
+      else if (a[i] < b[j]) i++
+      else j++
+    }
+  }
+  return result(sim.length + hist.length ? 2 * matches / (sim.length + hist.length) : 1, hist.length || sim.length)
 }
 
 export function scoreShare(sim: number | null, hist: number | null): IndicatorScore {

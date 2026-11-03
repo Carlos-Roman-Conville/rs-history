@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest'
+import matchingFixture from './fixtures/synthetic/matching/window-two.json'
 import { abandoned, combine, logError, scoreAdoption, scoreEvents, scoreJaccard, scoreLog, scoreShare, scoreTV } from '../src/index.ts'
 
 it('V9 a perfect run scores 1.0 and a constant factor two scores zero', () => {
@@ -45,7 +46,7 @@ it('V8 adoption uses a fifty year scale and preserves signed date errors', () =>
 })
 
 const event = (date: number, label = 'change') => ({ date, label })
-it('V8 events use same-label one-to-one greedy closest matching and F1', () => {
+it('V8 events use same-label maximum-cardinality matching and F1', () => {
   const sim = [event(1), event(2), event(100, 'war')]
   const hist = [event(0), event(110, 'war')]
   expect(scoreEvents(sim, hist).S).toBe(4 / 5)
@@ -54,16 +55,33 @@ it('V8 events use same-label one-to-one greedy closest matching and F1', () => {
   expect(scoreEvents([event(0)], [event(0, 'other')]).S).toBe(0)
   expect(scoreEvents([], []).S).toBe(1)
   expect(scoreEvents([], hist).S).toBe(0)
-  // Closest-first consumes 9 -> 10; 0 -> 20 then lies outside the window.
-  expect(scoreEvents([event(0), event(9)], [event(10), event(20)], 11).S).toBe(0.5)
+  // HIST-17: closest-first lost a match; 0 -> 10 and 9 -> 20 both fit.
+  expect(scoreEvents([event(0), event(9)], [event(10), event(20)], 11).S).toBe(1)
   expect(scoreEvents([...sim].reverse(), [...hist].reverse())).toEqual(scoreEvents(sim, hist))
 })
 
-it('event ties prefer the earlier historical date and do not mutate inputs', () => {
+it('events sort dates for matching without mutating inputs', () => {
   const sim = [event(10), event(30)], hist = [event(20), event(0)]
   const before = JSON.stringify([sim, hist])
   expect(scoreEvents(sim, hist, 10).S).toBe(1)
   expect(JSON.stringify([sim, hist])).toBe(before)
+})
+
+it('V17 synthetic window-two fixture gives two matches', () => {
+  const { simulated, reference, window, expected_matches } = matchingFixture.matching
+  const score = scoreEvents(simulated.map(date => event(date)), reference.map(date => event(date)), window)
+  expect(score).toEqual({ S: 1, signed: null, n_points: 2 })
+  expect(score.S! * (simulated.length + reference.length) / 2).toBe(expected_matches)
+})
+
+it('events preserve missing and empty-list rules in either input position', () => {
+  expect(scoreEvents([], [])).toEqual({ S: 1, signed: null, n_points: 0 })
+  for (const [sim, hist] of [[[], [event(0)]], [[event(0)], []]]) {
+    expect(scoreEvents(sim, hist)).toEqual({ S: 0, signed: null, n_points: 1 })
+  }
+  for (const score of [scoreEvents(null, []), scoreEvents([], null)]) {
+    expect(score).toEqual({ S: null, signed: null, n_points: 0, excluded: 'missing data' })
+  }
 })
 
 it('V8 violent succession shares use absolute difference', () => {
