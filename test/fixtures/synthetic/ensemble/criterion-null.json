@@ -1,0 +1,127 @@
+{
+  "label": "fixture",
+  "case": "criterion-null",
+  "defect": "ensemble criterion tolerance is null",
+  "expected": "insufficient",
+  "protocol": {
+    "milestone": "M1a",
+    "scenario": "labelled synthetic household",
+    "self_feeding": true,
+    "arms": [
+      {
+        "id": "provisioned",
+        "owner": "Life",
+        "configuration": {
+          "food": 2,
+          "learning": true
+        }
+      },
+      {
+        "id": "deprived",
+        "owner": "Life",
+        "configuration": {
+          "food": 1,
+          "learning": true
+        }
+      }
+    ],
+    "differences": [
+      "food"
+    ],
+    "seeds": [
+      2817550998,
+      2800773379,
+      2783995760,
+      2901439093,
+      2884661474,
+      2867883855,
+      2851106236,
+      2968549569,
+      2951771950,
+      91743058
+    ],
+    "streams": [
+      {
+        "id": "choice/person-fixture",
+        "mechanism": "choice",
+        "person_class": "person",
+        "coupling": "coupled",
+        "note": "fixture stream identity"
+      }
+    ],
+    "steps": [
+      {
+        "owner": "Life",
+        "reference_ms": 1000,
+        "second_ms": 6000
+      }
+    ],
+    "checks": [
+      {
+        "id": "ensemble",
+        "owner": "History",
+        "needs_types": [
+          "eat"
+        ],
+        "tolerance": null,
+        "margin": null,
+        "sidedness": "one"
+      }
+    ],
+    "required_event_types": [
+      "eat"
+    ],
+    "samples": [
+      {
+        "measure": "energy",
+        "every_ms": 1000
+      }
+    ]
+  },
+  "header": {
+    "run_id": "G-cp1/7/0123456789abcdef",
+    "target": "G-cp1",
+    "seed": 7,
+    "engines": [
+      {
+        "id": "kernel",
+        "package": "@rex/kernel",
+        "version": "1",
+        "commit": "fixture"
+      }
+    ],
+    "config_hash": "0123456789abcdef",
+    "init_bundle": "fixture/ensemble",
+    "boundary": [],
+    "epoch": {
+      "sim_t0": 0,
+      "date": 1270,
+      "calendar_note": "fixture synthetic run"
+    },
+    "checkpoints": {
+      "period_ms": 86400000,
+      "first_ms": 0
+    },
+    "resolution_plan": [
+      {
+        "entity": "fixture",
+        "mode": "fine",
+        "from_t": 0
+      }
+    ],
+    "reportable": true
+  },
+  "events": [],
+  "observations": [],
+  "ensemble": {
+    "checkpoints": 3,
+    "repetitions_per_checkpoint": 10,
+    "discrepancies": [
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  }
+}

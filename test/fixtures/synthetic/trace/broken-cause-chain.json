@@ -1,0 +1,68 @@
+{
+  "label": "fixture",
+  "case": "broken-cause-chain",
+  "defect": "broken cause chain",
+  "expected": "insufficient",
+  "header": {
+    "run_id": "G-cp1/7/0123456789abcdef",
+    "target": "G-cp1",
+    "seed": 7,
+    "engines": [
+      {
+        "id": "kernel",
+        "package": "@rex/kernel",
+        "version": "1",
+        "commit": "fixture"
+      }
+    ],
+    "config_hash": "0123456789abcdef",
+    "init_bundle": "fixture/trace",
+    "boundary": [],
+    "epoch": {
+      "sim_t0": 0,
+      "date": 1270,
+      "calendar_note": "fixture synthetic run"
+    },
+    "checkpoints": {
+      "period_ms": 86400000,
+      "first_ms": 0
+    },
+    "resolution_plan": [
+      {
+        "entity": "fixture",
+        "mode": "fine",
+        "from_t": 0
+      }
+    ],
+    "reportable": true
+  },
+  "events": [
+    {
+      "id": "evt.1",
+      "t": 1000,
+      "phase": 1,
+      "position": 0,
+      "sequence": 1,
+      "source": "life",
+      "type": "body.death",
+      "class": "demographic",
+      "payload": {
+        "person": "person/fixture-trace"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "t": 1000,
+      "quantity": "life.alive",
+      "unit": "kg",
+      "scope": {
+        "kind": "person",
+        "id": "person/fixture-trace"
+      },
+      "value": 0,
+      "mode": "fine",
+      "port": "alive"
+    }
+  ]
+}

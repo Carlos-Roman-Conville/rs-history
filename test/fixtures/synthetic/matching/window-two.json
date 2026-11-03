@@ -1,0 +1,53 @@
+{
+  "label": "fixture",
+  "case": "window-two",
+  "defect": "maximum matching within window w=2",
+  "expected": "pass",
+  "header": {
+    "run_id": "G-cp1/7/0123456789abcdef",
+    "target": "G-cp1",
+    "seed": 7,
+    "engines": [
+      {
+        "id": "kernel",
+        "package": "@rex/kernel",
+        "version": "1",
+        "commit": "fixture"
+      }
+    ],
+    "config_hash": "0123456789abcdef",
+    "init_bundle": "fixture/matching",
+    "boundary": [],
+    "epoch": {
+      "sim_t0": 0,
+      "date": 1270,
+      "calendar_note": "fixture synthetic run"
+    },
+    "checkpoints": {
+      "period_ms": 86400000,
+      "first_ms": 0
+    },
+    "resolution_plan": [
+      {
+        "entity": "fixture",
+        "mode": "fine",
+        "from_t": 0
+      }
+    ],
+    "reportable": true
+  },
+  "events": [],
+  "observations": [],
+  "matching": {
+    "simulated": [
+      0,
+      3
+    ],
+    "reference": [
+      2,
+      5
+    ],
+    "window": 2,
+    "expected_matches": 2
+  }
+}

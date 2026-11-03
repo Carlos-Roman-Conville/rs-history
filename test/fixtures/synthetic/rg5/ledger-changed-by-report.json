@@ -1,0 +1,91 @@
+{
+  "label": "fixture",
+  "case": "ledger-changed-by-report",
+  "defect": "ledger changed because of report content",
+  "expected": "fail",
+  "header": {
+    "run_id": "G-cp1/7/0123456789abcdef",
+    "target": "G-cp1",
+    "seed": 7,
+    "engines": [
+      {
+        "id": "kernel",
+        "package": "@rex/kernel",
+        "version": "1",
+        "commit": "fixture"
+      }
+    ],
+    "config_hash": "0123456789abcdef",
+    "init_bundle": "fixture/rg5",
+    "boundary": [],
+    "epoch": {
+      "sim_t0": 0,
+      "date": 1270,
+      "calendar_note": "fixture synthetic run"
+    },
+    "checkpoints": {
+      "period_ms": 86400000,
+      "first_ms": 0
+    },
+    "resolution_plan": [
+      {
+        "entity": "fixture",
+        "mode": "fine",
+        "from_t": 0
+      }
+    ],
+    "reportable": true
+  },
+  "events": [
+    {
+      "id": "evt.1",
+      "t": 1000,
+      "phase": 1,
+      "position": 0,
+      "sequence": 1,
+      "source": "cognition",
+      "type": "cognition.report",
+      "class": "culture",
+      "payload": {
+        "person": "person/fixture-trace",
+        "report": "report/fixture-3",
+        "received": true
+      }
+    },
+    {
+      "id": "evt.2",
+      "t": 2000,
+      "phase": 1,
+      "position": 0,
+      "sequence": 2,
+      "source": "economy",
+      "type": "kernel.transfer",
+      "class": "economic",
+      "cause": "report/fixture-3",
+      "payload": {
+        "t": 2000,
+        "process": "fixture/eat",
+        "quantity": "mass",
+        "unit": "kg",
+        "amount": 1,
+        "from": "economy/household",
+        "to": "life/gut",
+        "cause": "intention/fixture-1"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "t": 2000,
+      "quantity": "economy.inventory",
+      "unit": "kg",
+      "scope": {
+        "kind": "person",
+        "id": "person/fixture-1"
+      },
+      "value": 1,
+      "mode": "fine",
+      "port": "inventory"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "label": "fixture",
+  "case": "no-pair-no-flows",
+  "defect": "no same-instant pair and no intervening flows",
+  "expected": "insufficient",
+  "header": {
+    "run_id": "G-cp1/7/0123456789abcdef",
+    "target": "G-cp1",
+    "seed": 7,
+    "engines": [
+      {
+        "id": "kernel",
+        "package": "@rex/kernel",
+        "version": "1",
+        "commit": "fixture"
+      }
+    ],
+    "config_hash": "0123456789abcdef",
+    "init_bundle": "fixture/continuity",
+    "boundary": [],
+    "epoch": {
+      "sim_t0": 0,
+      "date": 1270,
+      "calendar_note": "fixture synthetic run"
+    },
+    "checkpoints": {
+      "period_ms": 86400000,
+      "first_ms": 0
+    },
+    "resolution_plan": [
+      {
+        "entity": "fixture",
+        "mode": "fine",
+        "from_t": 0
+      }
+    ],
+    "reportable": true
+  },
+  "events": [],
+  "observations": [
+    {
+      "t": 1000,
+      "quantity": "population.mass",
+      "unit": "kg",
+      "scope": {
+        "kind": "settlement",
+        "id": "settlement/fixture"
+      },
+      "value": 8,
+      "mode": "coarse",
+      "port": "mass"
+    },
+    {
+      "t": 2000,
+      "quantity": "population.mass",
+      "unit": "kg",
+      "scope": {
+        "kind": "settlement",
+        "id": "settlement/fixture"
+      },
+      "value": 10,
+      "mode": "fine",
+      "port": "mass"
+    }
+  ]
+}
