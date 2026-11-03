@@ -7,9 +7,7 @@ import { canonical, defaultOrder, fnv1a64, DAY, HOUR, SECOND, EventBus, Schedule
 import { dailyProcesses, threePorts, withKernelSteps, type Midnight } from '@rex/kernel-harness'
 import { attachObserver, openRun, type ObserverRead, type RunHeader, type SnapshotRef } from '@rex/history'
 import { totalUnits } from '@rex/economy'
-import { buildHamlet } from '../../settlement/examples/hamlet.ts'
-import { runHorseStable } from '../../realism/examples/horse-stable.ts'
-import type { World } from '../../realism/src/world.ts'
+import { buildHamlet, runHorseStable, type World } from '@rex/kernel-harness/examples'
 
 export type { Midnight }
 

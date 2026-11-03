@@ -17,13 +17,11 @@ Following S0, complete the DESIGN.md section 6 thirty-day demonstration seams (t
 
 ## Blocked
 
-- kernel-harness: export the hamlet and horse-stable examples; `harness/x1-0.ts` imports them by relative path from `../../settlement` and `../../realism`.
-- kernel: incremental bus read. Expose detached EventRecords since a cursor, including phase, position and sequence; `since(cursor)` returns only KernelEvents.
+None.
 
 ## Gotchas
 
 - `harness/S0-REPORT.md` is rewritten only when `S0_WRITE_REPORT` is set (or the file is missing).
-- Observer reads: full copy per checkpoint via `bus.state()` because `since(cursor)` omits required ordering metadata (phase, position, sequence); no incremental EventRecord API exists.
 - `share` takes `quantity: [part, whole]` (`src/aggregate.ts`).
 - `count` returns null when a member has no row; present rows with null values are excluded from the count (`src/aggregate.ts`).
 - `binomialTail` is one-sided and `signTest` is two-sided (`src/ensemble.ts`).

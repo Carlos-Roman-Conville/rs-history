@@ -116,7 +116,7 @@ it('a throwing writer marks the manifest non-reportable and engines still finish
 it.each(['bus', 'event', 'snapshot', 'fail'] as const)('G-inert contains %s failures and never retries recording', fault => {
   const run = toy(), rows = memory()
   const broken = vi.fn(() => { throw new Error('record fault') })
-  if (fault === 'bus') vi.spyOn(run.bus, 'state').mockImplementation(broken)
+  if (fault === 'bus') vi.spyOn(run.bus, 'recordsSince').mockImplementation(broken)
   if (fault === 'event') rows.writer.event = broken
   if (fault === 'fail') rows.writer.fail = vi.fn(() => { throw new Error('failure reporter fault') })
   const snapshot = fault === 'snapshot' || fault === 'fail' ? broken : undefined

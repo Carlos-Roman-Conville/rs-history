@@ -38,10 +38,9 @@ export function attachObserver({ scheduler, bus, writer, checkpoint, reads, clas
   function recordAt(t: number) {
     if (stopped) return
     try {
-      // since() omits ordering metadata; state() gives detached EventRecords.
-      const { records } = bus.state()
-      while (cursor < records.length && records[cursor].event.t <= t) {
-        const { event, phase, position, sequence } = records[cursor]
+      // Preserve the checkpoint cutoff, including when the host has queued future events.
+      const records = bus.recordsSince(cursor).filter(record => record.event.t <= t)
+      for (const { event, phase, position, sequence } of records) {
         const { payload, ...identity } = event
         const mapped = classes.map.some(row => row.source === event.source && row.type === event.type)
         writer.event({
@@ -49,8 +48,8 @@ export function attachObserver({ scheduler, bus, writer, checkpoint, reads, clas
           class: classify(event.source, event.type, classes),
           ...(mapped ? { payload } : { payload_hash: fnv1a64(canonical(payload)) }),
         })
-        cursor++
       }
+      cursor += records.length
       for (const input of reads) {
         let value: Value
         try { value = input.read() } catch { value = null; readFailures++ }
