@@ -13,7 +13,8 @@ export interface ProtocolCheck {
   id: string
   owner: string
   needs_types: string[]
-  tolerance: { abs: number; rel: number; scale: number; source: string } | null
+  /** A fixed scale or a named rule interpreted by the check's evaluator. */
+  tolerance: { abs: number; rel: number; scale: number | string; source: string } | null
   margin: { value: number; confidence: number; source: string } | null
   sidedness: 'one' | 'two' | null
   t_vacancy_ms?: number | null
@@ -99,7 +100,8 @@ export function validateProtocol(input: unknown): string[] {
     require(text(r.id), `${p}.id`); require(text(r.owner), `${p}.owner`)
     const required = input.required_event_types, tolerance = r.tolerance
     require(strings(r.needs_types) && strings(required) && r.needs_types.every(t => required.includes(t)), `${p}.needs_types`)
-    require(tolerance === null || object(tolerance) && ['abs', 'rel', 'scale'].every(k => nonnegative(tolerance[k])) && text(tolerance.source), `${p}.tolerance`)
+    require(tolerance === null || object(tolerance) && ['abs', 'rel'].every(k => nonnegative(tolerance[k]))
+      && (nonnegative(tolerance.scale) || text(tolerance.scale)) && text(tolerance.source), `${p}.tolerance`)
     require(r.margin === null || object(r.margin) && nonnegative(r.margin.value) && positive(r.margin.confidence) && r.margin.confidence < 1 && text(r.margin.source), `${p}.margin`)
     require(r.sidedness === null || r.sidedness === 'one' || r.sidedness === 'two', `${p}.sidedness`)
     require(r.t_vacancy_ms === undefined || r.t_vacancy_ms === null || positive(r.t_vacancy_ms), `${p}.t_vacancy_ms`)

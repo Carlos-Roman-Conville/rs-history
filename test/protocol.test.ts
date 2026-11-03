@@ -3,6 +3,17 @@ import { runnableArms, validateProtocol } from '../src/protocol.ts'
 import { fixture } from './protocol.fixture.ts'
 
 describe('milestone protocol', () => {
+  it('accepts named accounting scale rules while retaining numeric scales', () => {
+    const p = fixture()
+    for (const scale of ['max_open_close_volume', 'current', 'owner-specific-rule', 0, 1]) {
+      p.checks[0].tolerance!.scale = scale
+      expect(validateProtocol(p)).toEqual([])
+    }
+    for (const scale of ['', ' ', -1, Infinity]) {
+      p.checks[0].tolerance!.scale = scale
+      expect(validateProtocol(p)).toContain('checks[0].tolerance: invalid or missing')
+    }
+  })
   it('accepts derived pilot seeds and explicitly missing owner quantities', () => {
     const p = fixture(); p.checks[0].tolerance = null; p.checks[0].margin = null
     expect(validateProtocol(p)).toEqual([])
